@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<block>
+  <name>Complex to IShort</name>
+  <key>sandia_utils_complex_to_interleaved_short</key>
+  <category>[Sandia]/Sandia Utilities/Type Converters</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.complex_to_interleaved_short($vector_input, $scale)</make>
+
+	<callback>set_scale($scale)</callback>
+
+  <param>
+      <name>Vector Input</name>
+      <key>vector_input</key>
+      <value>False</value>
+      <type>enum</type>
+      <option>
+          <name>No</name>
+          <key>False</key>
+          <opt>vlen:1</opt>
+      </option>
+      <option>
+          <name>Yes</name>
+          <key>True</key>
+          <opt>vlen:2</opt>
+      </option>
+  </param>
+
+  <param>
+		<name>Scale</name>
+		<key>scale</key>
+		<value>32767</value>
+		<type>float</type>
+	</param>
+	
+  <sink>
+		<name>in</name>
+		<type>complex</type>
+	</sink>
+	
+  <source>
+		<name>out</name>
+		<type>short</type>
+        <vlen>$vector_input.vlen</vlen>
+	</source>
+
+  <doc>
+  This block is a clone of the gnuradio complex_to_ishort, but using a Volk kernel with the scaling parameter enabled. Eventually
+  this should live in gr_blocks instead of here.
+  </doc>
+</block>

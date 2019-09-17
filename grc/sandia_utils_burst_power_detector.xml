@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<block>
+  <name>Burst Power Detector</name>
+  <key>sandia_utils_burst_power_detector</key>
+  <category>[Sandia]/Sandia Utilities</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.burst_power_detector($naverage, $nguard, $threshold, $holdoff)</make>
+
+  <param>
+    <name>N-Average</name>
+    <key>naverage</key>
+    <value>150</value>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>N-Guard Bins</name>
+    <key>nguard</key>
+    <value>10</value>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>Threshold (dB)</name>
+    <key>threshold</key>
+    <value>10</value>
+    <type>float</type>
+  </param>
+
+  <param>
+    <name>Holdoff (samples)</name>
+    <key>holdoff</key>
+    <value>1000</value>
+    <type>int</type>
+  </param>
+
+  <check> $naverage > 0 </check>
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+
+  <source>
+    <name>pow</name>
+    <type>float</type>
+  </source>
+
+</block>

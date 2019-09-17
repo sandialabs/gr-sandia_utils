@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<block>
+  <name>File Monitor</name>
+  <key>sandia_utils_file_monitor</key>
+  <category>[Sandia]/Sandia Utilities/File Operators</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.file_monitor($nfiles,$output_path,$copy_data)</make>
+
+  <callback>set_copy($copy_data)</callback>
+  <callback>set_output_path($output_path)</callback>
+  <callback>set_nfiles($nfiles)</callback>
+  <param>
+    <name>Number of Files</name>
+    <key>nfiles</key>
+    <value>60</value>
+    <type>int</type>
+  </param>
+
+  <param>
+		<name>Output Path</name>
+		<key>output_path</key>
+		<value></value>
+		<type>string</type>
+	</param>
+
+  <param>
+    <name>Copy Data?</name>
+    <key>copy_data</key>
+    <value>False</value>
+    <type>int</type>
+    <option>
+      <name>Yes</name>
+      <key>1</key>
+    </option>
+    <option>
+      <name>No</name>
+      <key>0</key>
+    </option>
+  </param>
+
+  <sink>
+    <name>pdu</name>
+    <type>message</type>
+    <optional>1</optional>
+  </sink>
+
+
+  <doc>Monitor generated file data.
+
+This block is meant to monitor files generated using the file sink block which
+emits file names on message generation.  The block will allow for the retention
+of a specified number of files before removing them from the system.  At any
+point, the block can be signaled to copy the current monitored data to another
+location rather than removing from their current location.
+  </doc>
+</block>

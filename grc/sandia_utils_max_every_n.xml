@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<block>
+  <name>Max Every N</name>
+  <key>sandia_utils_max_every_n</key>
+  <category>[Sandia]/Sandia Utilities/Debug</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.max_every_n($n)</make>
+
+  <param>
+    <name>N</name>
+    <key>n</key>
+    <type>int</type>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>float</type>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>float</type>
+  </source>
+
+  <doc>Keeps the maximum input value every n inputs</doc>
+</block>

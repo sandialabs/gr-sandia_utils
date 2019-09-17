@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<block>
+  <name>Invert Tune</name>
+  <key>sandia_utils_invert_tune</key>
+  <category>[Sandia]/Sandia Utilities</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.invert_tune()</make>
+
+  <sink>
+    <name>tune</name>
+    <type>message</type>
+    <optional>1</optional>
+  </sink>
+
+  <source>
+    <name>tune</name>
+    <type>message</type>
+    <optional>1</optional>
+  </source>
+
+  <doc>This block will invert the value for key 'dsp_freq' in input tune dictionary.</doc>
+
+</block>

@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<block>
+  <name>File Source</name>
+  <key>sandia_utils_file_source</key>
+  <category>[Sandia]/Sandia Utilities/File Operators</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.file_source($type.size*$vlen, $file, $file_type, $repeat, $force_new)
+self.$(id).set_begin_tag($begin_tag)
+self.$(id).add_file_tags($file_tags)</make>
+
+  <callback>open($file, $repeat)</callback>
+  <callback>self.$(id).set_begin_tag($begin_tag)</callback>
+  <callback>self.$(id).add_file_tags($file_tags)</callback>
+
+  <param>
+		<name>File</name>
+		<key>file</key>
+		<value></value>
+		<type>file_open</type>
+	</param>
+  <param>
+    <name>File Type</name>
+    <key>file_type</key>
+    <value>raw</value>
+    <type>string</type>
+    <option>
+      <name>Raw IQ</name>
+      <key>raw</key>
+    </option>
+    <option>
+      <name>Raw IQ + Header</name>
+      <key>raw_header</key>
+    </option>
+    <!-- Optional packages will need to define the following variables -->
+    @HAVE_BLU_GRC_DEF@
+    @HAVE_COMPASS_GRC_DEF@
+  </param>
+
+  <param>
+    <name>Sampling Rate</name>
+    <key>rate</key>
+    <value>int(samp_rate)</value>
+    <type>int</type>
+    <hide>part</hide>
+  </param>
+	<param>
+		<name>Output Type</name>
+		<key>type</key>
+		<type>enum</type>
+		<option>
+			<name>Complex Float</name>
+			<key>complex</key>
+			<opt>size:gr.sizeof_gr_complex</opt>
+		</option>
+    <option>
+      <name>Complex Short Int</name>
+      <key>sc16</key>
+      <opt>size:2*gr.sizeof_short</opt>
+    </option>
+		<option>
+			<name>Float</name>
+			<key>float</key>
+			<opt>size:gr.sizeof_float</opt>
+		</option>
+		<option>
+			<name>Int</name>
+			<key>int</key>
+			<opt>size:gr.sizeof_int</opt>
+		</option>
+		<option>
+			<name>Short</name>
+			<key>short</key>
+			<opt>size:gr.sizeof_short</opt>
+		</option>
+		<option>
+			<name>Byte</name>
+			<key>byte</key>
+			<opt>size:gr.sizeof_char</opt>
+		</option>
+	</param>
+  <param>
+    <name>Force New File?</name>
+    <key>force_new</key>
+    <value>False</value>
+    <type>enum</type>
+    <option>
+      <name>Yes</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>No</name>
+      <key>False</key>
+    </option>
+  </param>
+	<param>
+		<name>Repeat</name>
+		<key>repeat</key>
+		<value>False</value>
+		<type>enum</type>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+	</param>
+	<param>
+		<name>Vec Length</name>
+		<key>vlen</key>
+		<value>1</value>
+		<type>int</type>
+	</param>
+
+	<param>
+		<name>Add begin tag</name>
+		<key>begin_tag</key>
+		<value>pmt.PMT_NIL</value>
+		<type>raw</type>
+	</param>
+  <param>
+    <name>Add file tags</name>
+    <key>file_tags</key>
+		<value>False</value>
+		<type>enum</type>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+	</param>
+	<check>$vlen &gt; 0</check>
+
+  <sink>
+    <name>pdu</name>
+    <type>message</type>
+    <optional>1</optional>
+  </sink>
+	<source>
+		<name>out</name>
+		<type>$type</type>
+		<vlen>$vlen</vlen>
+	</source>
+
+  <doc>Generate data from an input file.
+
+This block is functionally equivalent to the in-tree file source block with a
+message port extension to specify a new input file.  If the 'Force New File'
+option is chosen, the current file being processed will be closed and the new
+file opened when commanded.
+
+Adding file tags will cause the stream tags available based on the file type
+to be added to the output stream at the first sample of the file.  Similarly, if
+the beginning tags are populated, the first sample of every file will contain
+that tag.
+  </doc>
+
+</block>

@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<block>
+  <name>Stream Gate</name>
+  <key>sandia_utils_stream_gate</key>
+  <category>[Sandia]/Sandia Utilities</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.stream_gate_$(type)($flow_data,$consume_data)</make>
+
+  <callback>set_flow_data($flow_data)</callback>
+  <callback>set_consume_data($consume_data)</callback>
+
+  <param>
+		<name>Type</name>
+		<key>type</key>
+		<type>enum</type>
+		<option>
+			<name>Complex->Complex (Complex Taps)</name>
+			<key>cc</key>
+			<opt>input:complex</opt>
+			<opt>output:complex</opt>
+		</option>
+		<option>
+			<name>Float->Float</name>
+			<key>ff</key>
+			<opt>input:float</opt>
+			<opt>output:float</opt>
+		</option>
+    <option>
+			<name>Short->Short</name>
+			<key>ss</key>
+			<opt>input:short</opt>
+			<opt>output:short</opt>
+		</option>
+    <option>
+			<name>Byte->Byte</name>
+			<key>bb</key>
+			<opt>input:byte</opt>
+			<opt>output:byte</opt>
+		</option>
+	</param>
+
+  <param>
+    <name>Flow Data?</name>
+    <key>flow_data</key>
+    <value>True</value>
+    <type>bool</type>
+    <hide>part</hide>
+    <option>
+      <name>True</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>False</name>
+      <key>False</key>
+    </option>
+  </param>
+
+  <param>
+    <name>Consume Data?</name>
+    <key>consume_data</key>
+    <value>False</value>
+    <type>bool</type>
+    <hide>part</hide>
+    <option>
+      <name>True</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>False</name>
+      <key>False</key>
+    </option>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>$type.output</type>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>$type.input</type>
+  </source>
+
+  <doc>
+Control the flow of streaming data.  Data flow can be started and stopped.  When
+stopped, the block can either consume data from the input stream and not produce
+any data, or it can not consume or produce data, electing to sleep to reduce
+processing load.  The former condition is necessary when two blocks are
+connected to the same input buffer and one is flowing data while the other is
+not.
+  </doc>
+
+</block>
