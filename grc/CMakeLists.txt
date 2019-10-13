@@ -20,8 +20,10 @@
 
 MESSAGE(STATUS "Source Dir: ${CMAKE_BINARY_DIR}")
 install(FILES
-    ${CMAKE_BINARY_DIR}/grc/sandia_utils_file_sink.block.yml
-    ${CMAKE_BINARY_DIR}/grc/sandia_utils_file_source.block.yml 
+	#${CMAKE_BINARY_DIR}/grc/sandia_utils_file_sink.block.yml
+    #${CMAKE_BINARY_DIR}/grc/sandia_utils_file_source.block.yml
+    sandia_utils_file_sink.block.yml
+    sandia_utils_file_source.block.yml
     sandia_utils_burst_power_detector.block.yml
     sandia_utils_tag_debug_file.block.yml
     sandia_utils_invert_tune.block.yml
