@@ -21,7 +21,6 @@
 # Invoke macro to generate various headers
 #######################################################################
 include(GrMiscUtils)
-GR_EXPAND_X_H(sandia_utils stream_gate_XX cc ff ss bb)
 
 add_custom_target(sandia_utils_generated_includes DEPENDS
     ${generated_includes}
@@ -31,7 +30,10 @@ add_custom_target(sandia_utils_generated_includes DEPENDS
 # Install public header files
 ########################################################################
 install(FILES
-    ${generated_includes}
+    stream_gate_bb.h  
+    stream_gate_ss.h
+    stream_gate_cc.h  
+    stream_gate_ff.h
     api.h
     file_sink.h
     burst_power_detector.h

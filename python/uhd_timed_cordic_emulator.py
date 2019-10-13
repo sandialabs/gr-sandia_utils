@@ -41,7 +41,7 @@ class uhd_timed_cordic_emulator(gr.hier_block2):
 
         # variables
         taps = filter.firdes.low_pass_2(1, samp_rate, (samp_rate*0.4)/decimation, (samp_rate*0.4)/decimation, 60)
-        print "freq xlating filter created with " + repr(len(taps)) + " taps"
+        print("freq xlating filter created with " + repr(len(taps)) + " taps")
         fc_start = f0
 
         # message inputs / outputs

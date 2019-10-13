@@ -95,7 +95,7 @@ class file_monitor(gr.basic_block):
       # copy files from file queue
       with self.mutex:
         self.copy_queue = copy.deepcopy(self.file_queue)
-        print 'number of items to copy: ',len(self.copy_queue)
+        print('number of items to copy: ',len(self.copy_queue))
 
     elif (self.copy and not copy_flag):
       # stopping copying
@@ -128,7 +128,7 @@ class file_monitor(gr.basic_block):
       else:
         # try to create path
         try:
-          print "generating output path {}".format(path)
+          print("generating output path {}".format(path))
           os.mkdir(path)
           self.output_path = path
         except OSError:
@@ -153,10 +153,10 @@ class file_monitor(gr.basic_block):
 
         # copy
         try:
-          print "copying file {} to {}".format(fname,out_file)
+          print("copying file {} to {}".format(fname,out_file))
           shutil.copy(fname,out_file)
         except Exception as e:
-          print "unable to copy file: {}".format(e)
+          print("unable to copy file: {}".format(e))
 
       # TODO: Make this dynamic prevent thread lock
       if not len(self.copy_queue):
@@ -164,10 +164,10 @@ class file_monitor(gr.basic_block):
 
   def delete(self,fname):
     try:
-      print "removing file {}".format(fname)
+      print("removing file {}".format(fname))
       os.remove(fname)
     except Exception as e:
-      print "unable to delete file: {}".format(e)
+      print("unable to delete file: {}".format(e))
 
   def handler(self, msg):
     # is pair() will pass both dictionaries and pairs
@@ -183,7 +183,7 @@ class file_monitor(gr.basic_block):
     if pmt.equal(fpmt, pmt.PMT_NIL):
       return
     fname = pmt.symbol_to_string(fpmt)
-    print "received file {}".format(fname)
+    print("received file {}".format(fname))
 
     with self.mutex:
       self.file_queue.append(fname)

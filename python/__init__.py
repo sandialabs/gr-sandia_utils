@@ -22,20 +22,19 @@
 This is the GNU Radio SANDIA_UTILS module. Place your Python package
 description here (python/__init__.py).
 '''
+from __future__ import unicode_literals
 
 # import swig generated symbols into the sandia_utils namespace
 try:
-	# this might fail if the module is python-only
-	from sandia_utils_swig import *
-except ImportError as e:
-        print "Sandia Utils Swig Import Error: " + repr(e)
-	pass
+    # this might fail if the module is python-only
+    from .sandia_utils_swig import *
+except ImportError:
+    pass
 
 # import any pure python here
-from uhd_timed_cordic_emulator import uhd_timed_cordic_emulator
-from message_file_debug import message_file_debug
-from python_interface_sink import python_interface_sink
-from python_message_interface import python_message_interface
-from file_monitor import file_monitor
-
+from .uhd_timed_cordic_emulator import uhd_timed_cordic_emulator
+from .message_file_debug import message_file_debug
+from .python_interface_sink import python_interface_sink
+from .python_message_interface import python_message_interface
+from .file_monitor import file_monitor
 #

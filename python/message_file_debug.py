@@ -37,7 +37,7 @@ class message_file_debug(gr.basic_block):
         try:
             self.file = open(filename, 'w+')
         except IOError:
-            print "ERROR: could not open ", filename
+            print("ERROR: could not open ", filename)
             quit()
 
     def __del__(self):
