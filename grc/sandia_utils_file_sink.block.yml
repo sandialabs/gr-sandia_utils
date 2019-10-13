@@ -11,9 +11,8 @@ parameters:
     options: [complex, sc16, float, int, short, byte]
     option_labels: [Complex Float, Complex Short Int, Float, Int, Short, Byte]
     option_attributes:
-        size: [gr.sizeof_gr_complex, 2*gr.sizeof_short, gr.sizeof_float, gr.sizeof_int,
-            gr.sizeof_short, gr.sizeof_char]
-            #str: ["'complex'", "'complex_int'", "'float'", "'int'", "'short'", "'byte'"]
+        size: [gr.sizeof_gr_complex, 2*gr.sizeof_short, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short, gr.sizeof_char]
+        str: ["'complex'", "'complex_int'", "'float'", "'int'", "'short'", "'byte'"]
     hide: part
 -   id: vlen
     label: Vec Length

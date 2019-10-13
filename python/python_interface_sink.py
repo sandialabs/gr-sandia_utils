@@ -21,7 +21,7 @@
 
 import numpy
 from gnuradio import gr
-import Queue
+import queue
 
 class python_interface_sink(gr.sync_block):
     """
@@ -34,7 +34,7 @@ class python_interface_sink(gr.sync_block):
             out_sig=None)
         self.maxsize = maxsize
         self.vec_len = vec_len
-        self.dat_queue = Queue.Queue(self.maxsize)
+        self.dat_queue = queue.Queue(self.maxsize)
 
     def get_data(self, timeout = None):
         """ block until next data is available, then return it """
@@ -44,7 +44,7 @@ class python_interface_sink(gr.sync_block):
         while True:
             try:
                 self.dat_queue.get(False)
-            except Queue.Empty:
+            except queue.Empty:
                 break
 
     def work(self, input_items, output_items):
@@ -52,7 +52,7 @@ class python_interface_sink(gr.sync_block):
         for i in range(len(in0)):
             try:
                 self.dat_queue.put_nowait(in0[i])
-            except Queue.Full:
+            except queue.Full:
                 return i
         return len(in0)
 

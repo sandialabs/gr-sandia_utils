@@ -22,7 +22,7 @@
 import numpy
 import pmt
 from gnuradio import gr
-import Queue
+import queue
 
 class python_message_interface(gr.basic_block):
     """
@@ -37,46 +37,46 @@ class python_message_interface(gr.basic_block):
         self.message_port_register_out(pmt.intern('msg_out'))
         self.set_msg_handler(pmt.intern('msg_in'), self.msg_handler)
         self.queue_size = queue_size
-        self.msg_queue = Queue.Queue(queue_size)
+        self.msg_queue = queue.Queue(queue_size)
 
-    def msg_handler(self, message):
-        serialized_msg = pmt.serialize_str(message)
-        while True:
+        def msg_handler(self, message):
+            serialized_msg = pmt.serialize_str(message)
+            while True:
+                try:
+                    self.msg_queue.put_nowait(serialized_msg)
+                    break
+                except queue.Full:
+                    self.msg_queue.get(False)
+
+        def get_message(self, timeout = None):
+            """ block until next message is available, then return it """
             try:
-                self.msg_queue.put_nowait(serialized_msg)
-                break
-            except Queue.Full:
-                self.msg_queue.get(False)
+                msg = self.msg_queue.get(True, timeout)
+                return pmt.deserialize_str(msg)
+            except queue.Empty:
+                return None
 
-    def get_message(self, timeout = None):
-        """ block until next message is available, then return it """
-        try:
-            msg = self.msg_queue.get(True, timeout)
-            return pmt.deserialize_str(msg)
-        except Queue.Empty:
-            return None
+        def send_message(self, message):
+            """ send the given pmt message """
+            self.message_port_pub(pmt.intern('msg_out'), message)
 
-    def send_message(self, message):
-        """ send the given pmt message """
-        self.message_port_pub(pmt.intern('msg_out'), message)
+        def num_pending_messages(self):
+            return self.msg_queue.qsize()
 
-    def num_pending_messages(self):
-        return self.msg_queue.qsize()
+        def get_all_messages(self):
+            messages = []
+            while True:
+                try:
+                    next_msg = self.msg_queue.get_nowait()
+                    messages.append(pmt.deserialize_str(next_msg))
+                except queue.Empty:
+                    break
+            return messages
 
-    def get_all_messages(self):
-        messages = []
-        while True:
-            try:
-                next_msg = self.msg_queue.get_nowait()
-                messages.append(pmt.deserialize_str(next_msg))
-            except Queue.Empty:
-                break
-        return messages
-
-    def flush_messages(self):
-        while True:
-            try:
-                self.msg_queue.get(False)
-            except Queue.Empty:
-                break
+        def flush_messages(self):
+            while True:
+                try:
+                    self.msg_queue.get(False)
+                except queue.Empty:
+                    break
 

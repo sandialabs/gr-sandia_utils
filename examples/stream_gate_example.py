@@ -1,10 +1,14 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##################################################
+
+#
+# SPDX-License-Identifier: GPL-3.0
+#
 # GNU Radio Python Flow Graph
 # Title: Stream Gate Example
-# GNU Radio version: 3.7.13.5
-##################################################
+# GNU Radio version: 3.8.0.0
+
+from distutils.version import StrictVersion
 
 if __name__ == '__main__':
     import ctypes
@@ -14,22 +18,22 @@ if __name__ == '__main__':
             x11 = ctypes.cdll.LoadLibrary('libX11.so')
             x11.XInitThreads()
         except:
-            print "Warning: failed to XInitThreads()"
+            print("Warning: failed to XInitThreads()")
 
-from PyQt4 import Qt
+from PyQt5 import Qt
+from gnuradio import qtgui
+from gnuradio.filter import firdes
+import sip
 from gnuradio import analog
 from gnuradio import blocks
-from gnuradio import eng_notation
 from gnuradio import gr
-from gnuradio import qtgui
-from gnuradio.eng_option import eng_option
-from gnuradio.filter import firdes
-from optparse import OptionParser
-import sandia_utils
-import sip
 import sys
+import signal
+from argparse import ArgumentParser
+from gnuradio.eng_arg import eng_float, intx
+from gnuradio import eng_notation
+import sandia_utils
 from gnuradio import qtgui
-
 
 class stream_gate_example(gr.top_block, Qt.QWidget):
 
@@ -55,8 +59,14 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
         self.top_layout.addLayout(self.top_grid_layout)
 
         self.settings = Qt.QSettings("GNU Radio", "stream_gate_example")
-        self.restoreGeometry(self.settings.value("geometry").toByteArray())
 
+        try:
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
+        except:
+            pass
 
         ##################################################
         # Variables
@@ -73,7 +83,7 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
         ##################################################
         _flow1_check_box = Qt.QCheckBox('Channel 1: Flow')
         self._flow1_choices = {True: True, False: False}
-        self._flow1_choices_inv = dict((v,k) for k,v in self._flow1_choices.iteritems())
+        self._flow1_choices_inv = dict((v,k) for k,v in self._flow1_choices.items())
         self._flow1_callback = lambda i: Qt.QMetaObject.invokeMethod(_flow1_check_box, "setChecked", Qt.Q_ARG("bool", self._flow1_choices_inv[i]))
         self._flow1_callback(self.flow1)
         _flow1_check_box.stateChanged.connect(lambda i: self.set_flow1(self._flow1_choices[bool(i)]))
@@ -84,7 +94,7 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setColumnStretch(c, 1)
         _flow0_check_box = Qt.QCheckBox('Channel 0: Flow')
         self._flow0_choices = {True: True, False: False}
-        self._flow0_choices_inv = dict((v,k) for k,v in self._flow0_choices.iteritems())
+        self._flow0_choices_inv = dict((v,k) for k,v in self._flow0_choices.items())
         self._flow0_callback = lambda i: Qt.QMetaObject.invokeMethod(_flow0_check_box, "setChecked", Qt.Q_ARG("bool", self._flow0_choices_inv[i]))
         self._flow0_callback(self.flow0)
         _flow0_check_box.stateChanged.connect(lambda i: self.set_flow0(self._flow0_choices[bool(i)]))
@@ -95,7 +105,7 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setColumnStretch(c, 1)
         _consume1_check_box = Qt.QCheckBox('Channel 1: Consume')
         self._consume1_choices = {True: True, False: False}
-        self._consume1_choices_inv = dict((v,k) for k,v in self._consume1_choices.iteritems())
+        self._consume1_choices_inv = dict((v,k) for k,v in self._consume1_choices.items())
         self._consume1_callback = lambda i: Qt.QMetaObject.invokeMethod(_consume1_check_box, "setChecked", Qt.Q_ARG("bool", self._consume1_choices_inv[i]))
         self._consume1_callback(self.consume1)
         _consume1_check_box.stateChanged.connect(lambda i: self.set_consume1(self._consume1_choices[bool(i)]))
@@ -106,7 +116,7 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setColumnStretch(c, 1)
         _consume0_check_box = Qt.QCheckBox('Channel 0: Consume')
         self._consume0_choices = {True: True, False: False}
-        self._consume0_choices_inv = dict((v,k) for k,v in self._consume0_choices.iteritems())
+        self._consume0_choices_inv = dict((v,k) for k,v in self._consume0_choices.items())
         self._consume0_callback = lambda i: Qt.QMetaObject.invokeMethod(_consume0_check_box, "setChecked", Qt.Q_ARG("bool", self._consume0_choices_inv[i]))
         self._consume0_callback(self.consume0)
         _consume0_check_box.stateChanged.connect(lambda i: self.set_consume0(self._consume0_choices[bool(i)]))
@@ -118,22 +128,18 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
         self.sandia_utils_stream_gate_0_0 = sandia_utils.stream_gate_cc(flow1,consume1)
         self.sandia_utils_stream_gate_0 = sandia_utils.stream_gate_cc(flow0,consume0)
         self.qtgui_waterfall_sink_x_0_0 = qtgui.waterfall_sink_c(
-        	1024, #size
-        	firdes.WIN_BLACKMAN_hARRIS, #wintype
-        	freq, #fc
-        	samp_rate, #bw
-        	"", #name
-                1 #number of inputs
+            1024, #size
+            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            freq, #fc
+            samp_rate, #bw
+            "", #name
+            1 #number of inputs
         )
         self.qtgui_waterfall_sink_x_0_0.set_update_time(0.01)
         self.qtgui_waterfall_sink_x_0_0.enable_grid(False)
         self.qtgui_waterfall_sink_x_0_0.enable_axis_labels(True)
 
-        if not True:
-          self.qtgui_waterfall_sink_x_0_0.disable_legend()
 
-        if "complex" == "float" or "complex" == "msg_float":
-          self.qtgui_waterfall_sink_x_0_0.set_plot_pos_half(not True)
 
         labels = ['', '', '', '', '',
                   '', '', '', '', '']
@@ -141,7 +147,8 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
                   0, 0, 0, 0, 0]
         alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
                   1.0, 1.0, 1.0, 1.0, 1.0]
-        for i in xrange(1):
+
+        for i in range(1):
             if len(labels[i]) == 0:
                 self.qtgui_waterfall_sink_x_0_0.set_line_label(i, "Data {0}".format(i))
             else:
@@ -158,22 +165,18 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
         for c in range(1, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
-        	1024, #size
-        	firdes.WIN_BLACKMAN_hARRIS, #wintype
-        	freq, #fc
-        	samp_rate, #bw
-        	"", #name
-                1 #number of inputs
+            1024, #size
+            firdes.WIN_BLACKMAN_hARRIS, #wintype
+            freq, #fc
+            samp_rate, #bw
+            "", #name
+            1 #number of inputs
         )
         self.qtgui_waterfall_sink_x_0.set_update_time(0.01)
         self.qtgui_waterfall_sink_x_0.enable_grid(False)
         self.qtgui_waterfall_sink_x_0.enable_axis_labels(True)
 
-        if not True:
-          self.qtgui_waterfall_sink_x_0.disable_legend()
 
-        if "complex" == "float" or "complex" == "msg_float":
-          self.qtgui_waterfall_sink_x_0.set_plot_pos_half(not True)
 
         labels = ['', '', '', '', '',
                   '', '', '', '', '']
@@ -181,7 +184,8 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
                   0, 0, 0, 0, 0]
         alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
                   1.0, 1.0, 1.0, 1.0, 1.0]
-        for i in xrange(1):
+
+        for i in range(1):
             if len(labels[i]) == 0:
                 self.qtgui_waterfall_sink_x_0.set_line_label(i, "Data {0}".format(i))
             else:
@@ -198,7 +202,7 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
         for c in range(0, 1):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
-        self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, 1000, 1, 0)
+        self.analog_sig_source_x_0 = analog.sig_source_c(samp_rate, analog.GR_COS_WAVE, 1000, 1, 0, 0)
 
 
 
@@ -221,18 +225,18 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.qtgui_waterfall_sink_x_0_0.set_frequency_range(self.freq, self.samp_rate)
-        self.qtgui_waterfall_sink_x_0.set_frequency_range(self.freq, self.samp_rate)
-        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
+        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
+        self.qtgui_waterfall_sink_x_0.set_frequency_range(self.freq, self.samp_rate)
+        self.qtgui_waterfall_sink_x_0_0.set_frequency_range(self.freq, self.samp_rate)
 
     def get_freq(self):
         return self.freq
 
     def set_freq(self, freq):
         self.freq = freq
-        self.qtgui_waterfall_sink_x_0_0.set_frequency_range(self.freq, self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(self.freq, self.samp_rate)
+        self.qtgui_waterfall_sink_x_0_0.set_frequency_range(self.freq, self.samp_rate)
 
     def get_flow1(self):
         return self.flow1
@@ -267,10 +271,10 @@ class stream_gate_example(gr.top_block, Qt.QWidget):
         self.sandia_utils_stream_gate_0.set_consume_data(self.consume0)
 
 
+
 def main(top_block_cls=stream_gate_example, options=None):
 
-    from distutils.version import StrictVersion
-    if StrictVersion(Qt.qVersion()) >= StrictVersion("4.5.0"):
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')
         Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
@@ -279,10 +283,20 @@ def main(top_block_cls=stream_gate_example, options=None):
     tb.start()
     tb.show()
 
+    def sig_handler(sig=None, frame=None):
+        Qt.QApplication.quit()
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    timer = Qt.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
+
     def quitting():
         tb.stop()
         tb.wait()
-    qapp.connect(qapp, Qt.SIGNAL("aboutToQuit()"), quitting)
+    qapp.aboutToQuit.connect(quitting)
     qapp.exec_()
 
 
