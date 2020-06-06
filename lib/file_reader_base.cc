@@ -31,8 +31,11 @@
 namespace gr {
   namespace sandia_utils {
 
-    /*
-     * The public constructor
+    /**
+     * Consructor
+     *
+     * @param itemsize - per item size in bytes
+     * @param logger - parent file source logger instance
      */
     file_reader_base::file_reader_base(size_t itemsize, gr::logger_ptr logger)
       : d_itemsize(itemsize),
@@ -50,6 +53,11 @@ namespace gr {
       if (d_is_open) { this->close(); }
     }
 
+    /**
+     * Opens a new file. Closes current file if open
+     *
+     * @param filename - filename of file to open
+     */
     void
     file_reader_base::open(const char *filename) {
       if (d_is_open) { this->close(); }
@@ -80,20 +88,38 @@ namespace gr {
       d_is_open = true;
     }
 
-    void
-    file_reader_base::close() {
+    /**
+     * Closes the open file
+     */
+    void file_reader_base::close() {
       if ((d_is_open) and (d_fp != NULL)) {
         fclose(d_fp);
         d_is_open = false;
+        d_fp = NULL;
       }
     }
 
+    /**
+     * Seek in the file source
+     *
+     * @param seek_point - offset position to seek to
+     * @param whence - refrence point for seek, see fseek
+     * @return bool - 0 or false on success
+     */
     bool
     file_reader_base::seek(long seek_point, int whence)
     {
       return fseek((FILE*)d_fp, seek_point *d_itemsize, whence) == 0;
     }
 
+    /**
+     * Read items from file.
+     * Number of bytes read from file is based on #d_itemsize
+     *
+     * @param dest - destination storage for sample
+     * @param nitems - number of items to ready
+     * @return int - number of items read. 0 on EOF or error
+     */
     int
     file_reader_base::read(char *dest, int nitems)
     {

@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,22 +36,22 @@ namespace gr {
       file_writer_raw_header(std::string data_type, std::string file_type,
                     size_t itemsize, uint64_t nsamples, int rate,
                     std::string out_dir, std::string name_spec);
-      ~file_writer_raw_header();
+      virtual ~file_writer_raw_header();
 
       /*!
        * Open a new file
        */
-      void open(std::string fname);
+      virtual void open(std::string fname);
 
       /*!
        * Close the current file
        */
-      void close();
+      virtual void close();
 
       /*!
        * Write data
        */
-      int write_impl(const void *in, int nitems);
+      virtual int write_impl(const void *in, int nitems);
     };
 
   } // namespace sandia_utils

@@ -21,9 +21,9 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-from file_monitor import file_monitor
+from file_archiver import file_archiver
 
-class qa_file_monitor (gr_unittest.TestCase):
+class qa_file_archiver (gr_unittest.TestCase):
 
     def setUp (self):
         self.tb = gr.top_block ()
@@ -38,4 +38,4 @@ class qa_file_monitor (gr_unittest.TestCase):
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_file_monitor, "qa_file_monitor.xml")
+    gr_unittest.run(qa_file_archiver, "qa_file_archiver.xml")

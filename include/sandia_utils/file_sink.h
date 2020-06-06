@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +34,35 @@ namespace gr {
     };
 
     /*!
-     * \brief <+description of block+>
+     * \brief File Sink with extra type support and extra file ops support
      * \ingroup sandia_utils
+     *
+     *
+     * This block will save data to files.  File length specified in number
+     * of samples, where 0 will result in a single file being generated.  Successive
+     * files increment time and file number accordingly.
+
+     * A new folder can be generated at the start of a new collect.  The folder name
+     * will have the format:
+     *
+     * YYYYMMDD/HH_MM_SS
+     * where Y = year, M = month(00-12), D = day (00-31), HH = hour (00-23),
+     * MM = minute (00-59), and SS = second (00-60)
+     *
+     * File names can be specified using all conversion specifications supported by
+     * strftime.  Additional the following converation specifications can be used:
+     *
+     * %fcM      Collection center frequency in MHz
+     * %fck      Collection center frequency in kHz
+     * %fcc      Collection center frequency in Hz
+     * %fsM      Collection sample rate in MHz
+     * %fsk      Collection sample rate in kHz
+     * %fsc      Collection sample rate in Hz
+     * %fd       Generated file number.  Modifiers in the standard form (0,N) can
+     *      be specified to determine the number of files generated.  For
+     *      example, %03fd will wrap after 1000 files, prepending zeros to ensure
+     *      3 characters per file number.
+     *
      *
      */
     class SANDIA_UTILS_API file_sink : virtual public gr::sync_block
@@ -46,12 +73,7 @@ namespace gr {
       /*!
        * \brief Return a shared_ptr to a new instance of sandia_utils::file_sink.
        *
-       * To avoid accidental use of raw pointers, sandia_utils::file_sink's
-       * constructor is in a private implementation
-       * class. sandia_utils::file_sink::make is the public interface for
-       * creating new instances.
-       *
-       * \param data_type Input data type (complex, float, int, short, byte)
+       * \param data_type Input data type (complex, complex_int, float, int, short, byte)
        * \param itemsize Size of each item in bytes
        * \param file_type File type specifier
        * \param mode Recording mode (Manual or Triggered)
@@ -129,7 +151,16 @@ namespace gr {
       virtual void set_nsamples(uint64_t nsamples) = 0;
       virtual uint64_t get_nsamples() = 0;
 
-
+      /*!
+       * \brief Set/Get file number rollover
+       *
+       * The file counter used in the name specifier can be set to rollover
+       * at a specified value.  A rollover value less than or equal to 0
+       * indicates no rollover value for file number.
+       *
+       */
+      virtual void set_file_num_rollover(int rollover) = 0;
+      virtual int get_file_num_rollover() = 0;
     };
 
   } // namespace sandia_utils

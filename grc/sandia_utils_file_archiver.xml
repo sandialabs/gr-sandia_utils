@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<block>
+  <name>File Archiver</name>
+  <key>sandia_utils_file_archiver</key>
+  <category>[Sandia]/Sandia Utilities/File Operators</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.file_archiver($output_path,$format,$archive)</make>
+
+  <callback>set_archive($archive)</callback>
+  <callback>set_output_path($output_path)</callback>
+  <callback>set_fname_format($format)</callback>
+
+  <param>
+		<name>Output Path</name>
+		<key>output_path</key>
+		<value></value>
+		<type>string</type>
+	</param>
+
+  <param>
+    <name>Filename Format</name>
+    <key>format</key>
+    <value></value>
+    <type>string</type>
+  </param>
+
+  <param>
+    <name>Archive?</name>
+    <key>archive</key>
+    <value>False</value>
+    <type>int</type>
+    <option>
+      <name>Yes</name>
+      <key>1</key>
+    </option>
+    <option>
+      <name>No</name>
+      <key>0</key>
+    </option>
+  </param>
+
+  <sink>
+    <name>pdu</name>
+    <type>message</type>
+    <optional>1</optional>
+  </sink>
+
+
+  <doc>Archive generated file data.  If the filename format is unspecified,
+files will be directly copied to the output directory.  Otherwise, metadata
+associated with the filename can be used to generate a unique filename on
+output
+
+File names on copy can be specified using all conversion specifications
+supported by strftime.  Additional the following converation specifications
+can be used
+
+  %fcM      Collection center frequency in MHz
+  %fck      Collection center frequency in kHz
+  %fcc      Collection center frequency in Hz
+  %fsM      Collection sample rate in MHz
+  %fsk      Collection sample rate in kHz
+  %fsc      Collection sample rate in Hz
+  </doc>
+</block>

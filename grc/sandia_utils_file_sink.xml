@@ -7,13 +7,14 @@
   <make>sandia_utils.file_sink($type.str, $type.size*$vlen, $file_type, $mode, $nsamples, $rate, $directory, $name_spec)
 self.$(id).set_recording($record)
 self.$(id).set_gen_new_folder($create_new_dir)
-self.$(id).set_second_align($align)</make>
-
+self.$(id).set_second_align($align)
+self.$(id).set_file_num_rollover($file_num_rollover)</make>
 
   <callback>set_mode($mode)</callback>
   <callback>set_recording($record)</callback>
   <callback>set_nsamples($nsamples)</callback>
   <callback>set_second_align($align)</callback>
+  <callback>set_file_num_rollover($file_num_rollover)</callback>
   <param_tab_order>
     <tab>General</tab>
     <tab>File Options</tab>
@@ -59,6 +60,12 @@ self.$(id).set_second_align($align)</make>
       <opt>size:gr.sizeof_char</opt>
       <opt>str:"byte"</opt>
     </option>
+    <option>
+      <name>Message</name>
+      <key>message</key>
+      <opt>size:gr.sizeof_char</opt>
+      <opt>str:"message"</opt>
+    </option>
   </param>
 
   <param>
@@ -66,6 +73,7 @@ self.$(id).set_second_align($align)</make>
     <key>vlen</key>
     <value>1</value>
     <type>int</type>
+    <hide>#if $type() == 'message' then 'all' else 'partial'#</hide>
   </param>
 
   <param>
@@ -73,6 +81,7 @@ self.$(id).set_second_align($align)</make>
     <key>mode</key>
     <value>sandia_utils.MANUAL</value>
     <type>int</type>
+    <hide>#if $type() == 'message' then 'all' else 'partial'#</hide>
     <option>
       <name>Manual</name>
       <key>sandia_utils.MANUAL</key>
@@ -88,7 +97,7 @@ self.$(id).set_second_align($align)</make>
     <key>record</key>
     <value>False</value>
     <type>bool</type>
-    <hide>part</hide>
+    <hide>#if $type() == 'message' then 'all' else 'partial'#</hide>
     <option>
       <name>True</name>
       <key>True</key>
@@ -104,6 +113,7 @@ self.$(id).set_second_align($align)</make>
     <key>file_type</key>
     <value>raw</value>
     <type>string</type>
+    <hide>#if $type() == 'message' then 'all' else 'none'#</hide>
     <option>
       <name>Raw IQ</name>
       <key>raw</key>
@@ -122,7 +132,7 @@ self.$(id).set_second_align($align)</make>
     <key>rate</key>
     <value>int(samp_rate)</value>
     <type>int</type>
-    <hide>part</hide>
+    <hide>#if $type() == 'message' then 'all' else 'partial'#</hide>
   </param>
 
   <!-- Begin File Options items -->
@@ -131,6 +141,7 @@ self.$(id).set_second_align($align)</make>
     <key>directory</key>
     <value>""</value>
     <type>string</type>
+    <hide>partial</hide>
     <tab>File Options</tab>
   </param>
 
@@ -139,7 +150,8 @@ self.$(id).set_second_align($align)</make>
     <key>create_new_dir</key>
     <value>True</value>
     <type>bool</type>
-    <hide>partial</hide>
+    <!-- <hide>all</hide>  -->
+    <hide>#if $type() == 'message' then 'all' else 'none'#</hide>
     <option>
       <name>True</name>
       <key>True</key>
@@ -156,7 +168,7 @@ self.$(id).set_second_align($align)</make>
     <key>name_spec</key>
     <value>"%Y%m%d_%H_%M_%S_fc=%fcMHz_fs=%fskHz.dat"</value>
     <type>string</type>
-    <hide>part</hide>
+    <hide>partial</hide>
     <tab>File Options</tab>
   </param>
 
@@ -165,6 +177,16 @@ self.$(id).set_second_align($align)</make>
     <key>nsamples</key>
     <value>0</value>
     <type>int</type>
+    <hide>#if $type() == 'message' then 'all' else 'none'#</hide>
+    <tab>File Options</tab>
+  </param>
+
+  <param>
+    <name>File Number Rollover</name>
+    <key>file_num_rollover</key>
+    <value>0</value>
+    <type>int</type>
+    <hide>#if $type() == 'message' then 'all' else 'partial'#</hide>
     <tab>File Options</tab>
   </param>
 
@@ -173,7 +195,7 @@ self.$(id).set_second_align($align)</make>
     <key>align</key>
     <value>True</value>
     <type>bool</type>
-    <hide>partial</hide>
+    <hide>#if $type() == 'message' then 'all' else 'partial'#</hide>
     <option>
       <name>True</name>
       <key>True</key>
@@ -187,13 +209,16 @@ self.$(id).set_second_align($align)</make>
 
   <check>$vlen &gt; 0</check>
   <check>$nsamples &gt; -1</check>
+  <check>$file_num_rollover &gt; -1</check>
   <sink>
     <name>in</name>
     <type>$type</type>
     <vlen>$vlen</vlen>
+    <nports>#if $type.str == 'message' then 0 else $nchan#</nports>
+    <optional>1</optional>
   </sink>
   <source>
-    <name>msg</name>
+    <name>pdu</name>
     <type>message</type>
     <optional>1</optional>
   </source>

@@ -22,8 +22,11 @@
 #include "sandia_utils/file_source.h"
 #include "sandia_utils/interleaved_short_to_complex.h"
 #include "sandia_utils/complex_to_interleaved_short.h"
+#include "sandia_utils/tagged_bits_to_bytes.h"
+#include "sandia_utils/constants.h"
 %}
 
+%include "sandia_utils/constants.h"
 
 %include "sandia_utils/file_sink.h"
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, file_sink);
@@ -53,3 +56,5 @@ GR_SWIG_BLOCK_MAGIC2(sandia_utils, file_source);
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, interleaved_short_to_complex);
 %include "sandia_utils/complex_to_interleaved_short.h"
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, complex_to_interleaved_short);
+%include "sandia_utils/tagged_bits_to_bytes.h"
+GR_SWIG_BLOCK_MAGIC2(sandia_utils, tagged_bits_to_bytes);

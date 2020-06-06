@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,12 +27,12 @@
 #include <iostream>
 #include <stdio.h>
 
-
-namespace gr {
-  namespace sandia_utils {
-    file_writer_raw_header::file_writer_raw_header(std::string data_type, std::string file_type,
-                                 size_t itemsize, uint64_t nsamples, int rate,
-                                 std::string out_dir, std::string name_spec)
+namespace gr
+{
+  namespace sandia_utils
+  {
+    file_writer_raw_header::file_writer_raw_header( std::string data_type, std::string file_type, size_t itemsize,
+        uint64_t nsamples, int rate, std::string out_dir, std::string name_spec )
     {
       /* NOOP */
     }
@@ -43,32 +43,34 @@ namespace gr {
       close();
     }
 
-    void
-    file_writer_raw_header::open(std::string fname){
+    void file_writer_raw_header::open( std::string fname )
+    {
       GR_LOG_DEBUG(d_logger,boost::format("Opening file %s") % fname.c_str());
-      d_outfile.open(fname.c_str(), std::ofstream::binary);
+      d_outfile.open( fname.c_str(), std::ofstream::binary );
 
       // write header
       // format is: (frequency, rate, sample_time)
       double freq = (double)d_freq;
       double rate = (double)d_rate;
       double start_time = d_samp_time.dtime();
-      d_outfile.write((const char *)&freq, sizeof(double));
-      d_outfile.write((const char *)&rate, sizeof(double));
-      d_outfile.write((const char *)&start_time, sizeof(double));
+      d_outfile.write( (const char*)&freq, sizeof(double) );
+      d_outfile.write( (const char*)&rate, sizeof(double) );
+      d_outfile.write( (const char*)&start_time, sizeof(double) );
     }
 
-    void
-    file_writer_raw_header::close(){
-      if (d_outfile.is_open()) {
+    void file_writer_raw_header::close()
+    {
+      if( d_outfile.is_open() )
+      {
         GR_LOG_DEBUG(d_logger,boost::format("Closing file %s") % d_filename);
+        d_outfile.flush();
         d_outfile.close();
       }
     }
 
-    int
-    file_writer_raw_header::write_impl(const void *in, int nitems){
-      d_outfile.write((const char *)in,nitems*d_itemsize);
+    int file_writer_raw_header::write_impl( const void *in, int nitems )
+    {
+      d_outfile.write( (const char*)in, nitems * d_itemsize );
       return nitems;
     }
 

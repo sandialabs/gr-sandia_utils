@@ -26,11 +26,14 @@
  */
 
 #include "qa_sandia_utils.h"
+#include "qa_file_sink.h"
 
 CppUnit::TestSuite *
 qa_sandia_utils::suite()
 {
   CppUnit::TestSuite *s = new CppUnit::TestSuite("sandia_utils");
+
+  s->addTest(qa_file_sink::suite());
 
   return s;
 }

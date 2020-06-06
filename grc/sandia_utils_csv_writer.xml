@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<block>
+  <name>CSV Writer</name>
+  <key>sandia_utils_csv_writer</key>
+  <category>[Sandia]/Sandia Utilities</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.csv_writer($file, $add_metadata, $metadata_format, $data_type,$precision)</make>
+  <param>
+		<name>File</name>
+		<key>file</key>
+		<value></value>
+		<type>file_open</type>
+	</param>
+
+  <param>
+    <name>Add Metadata?</name>
+    <key>add_metadata</key>
+    <value>True</value>
+    <type>bool</type>
+    <hide>part</hide>
+    <option>
+      <name>True</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>False</name>
+      <key>False</key>
+    </option>
+  </param>
+
+  <param>
+    <name>Metadata Format</name>
+    <key>metadata_format</key>
+    <value></value>
+    <type>string</type>
+    <hide>#if $add_metadata() then 'none' else 'all'#</hide>
+  </param>
+
+  <param>
+    <name>Data Type</name>
+    <key>data_type</key>
+    <value>'uint8'</value>
+    <type>enum</type>
+    <option>
+      <name>Unsigned 8-bit Integer</name>
+      <key>'uint8'</key>
+      <opt>int:True</opt>
+    </option>
+    <option>
+      <name>Signed 8-bit Integer</name>
+      <key>'int8'</key>
+      <opt>int:True</opt>
+    </option>
+    <option>
+      <name>Unsigned 16-bit Integer</name>
+      <key>'uint16'</key>
+      <opt>int:True</opt>
+    </option>
+    <option>
+      <name>Signed 8-bit Integer</name>
+      <key>'int16'</key>
+      <opt>int:True</opt>
+    </option>
+    <option>
+      <name>Unsigned 32-bit Integer</name>
+      <key>'uint32'</key>
+      <opt>int:True</opt>
+    </option>
+    <option>
+      <name>Signed 32-bit Integer</name>
+      <key>'int32'</key>
+      <opt>int:True</opt>
+    </option>
+    <option>
+      <name>Single Precision (Float)</name>
+      <key>'float'</key>
+      <opt>int:False</opt>
+    </option>
+    <option>
+      <name>Complex Single Precision (Complex Float)</name>
+      <key>'complex float'</key>
+      <opt>int:False</opt>
+    </option>
+    <option>
+      <name>Double Precision (Double)</name>
+      <key>'double'</key>
+      <opt>int:False</opt>
+    </option>
+    <option>
+      <name>Complex Double Precision (Complex Double)</name>
+      <key>'complex double'</key>
+      <opt>int:False</opt>
+    </option>
+  </param>
+
+  <param>
+    <name>Precision</name>
+    <key>precision</key>
+    <value>0</value>
+    <type>int</type>
+    <hide>#if $data_type.int == 'True' then 'all' else 'part'#</hide>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>message</type>
+  </sink>
+
+  <doc>
+Write data to CSV file.
+
+A header in the first row of the file is used to specify the format
+of the contents of the file.  Metadata fields are specified in the first
+columns of the file while the last columns of the file that do not have
+any header information associated with them are the data itself.
+
+If the file is selected to contain metadata, the fields to be output can
+be specified using a comma delimited string in the metadata format section
+or if left blank, all fields from the first received message will be
+output using an assumed string type.  Defining the metadata format is
+preferred not only to maintain data type consistency between CSV source
+and sink options, but also to be selective in the metadata that is output
+to the file.
+
+The metadata type is specified within parentheses after each metadata field.
+
+The input message must be a pair (PDU), with the metadata being the first
+element and a uniform vector the second element.
+
+The following metadata types and uniform vector types are supported:
+
+Supported metadata types:
+  * string
+  * bool (True/False)
+  * long
+  * uint64
+  * float
+  * double
+  * complex
+  * time (car = uint64, cdr = double)
+
+Supported data types:
+  * uint8
+  * int8
+  * uint16
+  * int16
+  * uint32
+  * int32
+  * uint64
+  * int64
+  * float
+  * complex float
+  * double
+  * complex double
+
+Note: u64 and s64 vector elements are not fully supported in version
+3.7.13.3 and thus are not supported here yet.
+
+For floating point data types, the precision can also be specified.
+
+Given the following PDU with a metadata formatting of
+
+  format: 'field0(string),field1(bool),field2(float)'
+  data(uint8): [65, 66, 67, 68, 69, 70]
+
+
+  (((field2 . 3.072e+07) (field1 . #t) (field0 . A)) . #[A B C D E F])
+
+Output file format (uint8 data type):
+
+  field0(string),field1(bool),field2(float)
+  A,True,30.72e6,65,66,67,68,69,70
+</doc>
+
+</block>

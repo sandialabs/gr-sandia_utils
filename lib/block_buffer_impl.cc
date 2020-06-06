@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2018 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2018 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ namespace gr {
         d_pass_data(pass_data)
     {
       init_buffers(nsamples);
-      
+
       // small spinlock timeout at beginning till rate is reading
       d_usleep = 10;
 
@@ -171,16 +171,16 @@ namespace gr {
         // read as much as we can into the current buffer
         size_t to_read = std::min((size_t)(ninput_items[0] - in_idx), d_nsamples - d_read_idx);
         //printf("reading %lu items starting at %d into buffer %d\n", to_read, in_idx, d_reading);
-	
+
 	// update current rate
 	std::vector<tag_t> rate_tags;
 	get_tags_in_window(rate_tags, 0, in_idx, in_idx + to_read, PMT_RX_RATE);
-	if (rate_tags.size() > 0) { 
+	if (rate_tags.size() > 0) {
 	  // use first tag only?
 	  double rate = pmt::to_double(rate_tags[0].value);
-	  
+
 	  // set sleep to be 2/4 of the input buffer size
-	  d_usleep = (int) ((double)d_input_buff_size / 2.0 / rate * 1e6);	  
+	  d_usleep = (int) ((double)d_input_buff_size / 2.0 / rate * 1e6);
 	}
 
         // find overflow tags
@@ -233,15 +233,16 @@ namespace gr {
             // reset to pont of last tag
             d_read_idx = 0;
             in_idx = tags.back().offset - nitems_read(0);
-            printf("bad tags... starting buffer %d over at %d\n", d_reading, in_idx);
-            printf("the size of overflow_tags is %ld\n", overflow_tags.size());
+            GR_LOG_DEBUG(d_logger,boost::format("bad tags... starting buffer %d over at %d\n")
+              % d_reading % in_idx);
+            GR_LOG_DEBUG(d_logger,boost::format("the size of overflow_tags is %ld\n") % overflow_tags.size());
             if (overflow_tags.size()) {
-              printf("the overflow tags value is %d \n", pmt::to_bool(overflow_tags[0].value) );
+              GR_LOG_DEBUG(d_logger,boost::format("the overflow tags value is %d \n") % pmt::to_bool(overflow_tags[0].value) );
             }
-            printf("the size of tags is %ld\n", tags.size());
-            printf("the abs_read index is %ld \n", d_buf[d_reading].abs_read_idx);
+            GR_LOG_DEBUG(d_logger,boost::format("the size of tags is %ld\n") % tags.size());
+            GR_LOG_DEBUG(d_logger,boost::format("the abs_read index is %ld \n") % d_buf[d_reading].abs_read_idx);
             if (tags.size()) {
-              printf("the tags[0] offset is %ld \n", tags[0].offset);
+              GR_LOG_DEBUG(d_logger,boost::format("the tags[0] offset is %ld \n") % tags[0].offset);
             }
             continue;
           }

@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2018 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2018 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,6 +65,7 @@ namespace gr {
        * \param sizeof_stream_item size of the items in the incoming stream.
        * \param name name to identify which debug sink generated the info.
        * \param key_filter Specify a tag's key value to use as a filter.
+       * \param filename to log to
        */
       static sptr make(size_t sizeof_stream_item, const std::string &name, const std::string &key_filter, const std::string &filename);
 

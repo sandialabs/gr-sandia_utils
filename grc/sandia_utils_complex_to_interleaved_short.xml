@@ -4,13 +4,13 @@
   <key>sandia_utils_complex_to_interleaved_short</key>
   <category>[Sandia]/Sandia Utilities/Type Converters</category>
   <import>import sandia_utils</import>
-  <make>sandia_utils.complex_to_interleaved_short($vector_input, $scale)</make>
+  <make>sandia_utils.complex_to_interleaved_short($vector_output, $scale)</make>
 
 	<callback>set_scale($scale)</callback>
 
   <param>
-      <name>Vector Input</name>
-      <key>vector_input</key>
+      <name>Vector Output</name>
+      <key>vector_output</key>
       <value>False</value>
       <type>enum</type>
       <option>
@@ -36,11 +36,11 @@
 		<name>in</name>
 		<type>complex</type>
 	</sink>
-	
+
   <source>
 		<name>out</name>
 		<type>short</type>
-        <vlen>$vector_input.vlen</vlen>
+        <vlen>$vector_output.vlen</vlen>
 	</source>
 
   <doc>

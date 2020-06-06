@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,46 +50,110 @@
 #define	OUR_O_LARGEFILE 0
 #endif
 
-namespace gr {
-  namespace sandia_utils {
+namespace gr
+{
+  namespace sandia_utils
+  {
+
+    /**
+     * Base Class for file source reader.
+     * Extending classes implement specific file formats.
+     * Base implementation implements Raw IQ file format
+     */
     class SANDIA_UTILS_API file_reader_base
     {
-    protected:
-      // itemsize in bytes
-      size_t            d_itemsize;
+      protected:
+        // itemsize in bytes
+        size_t d_itemsize;
 
-      // file status
-      bool              d_is_open;
-      std::string       d_filename;
-      FILE              *d_fp;
-      int               d_file_size;
+        // file status
+        bool d_is_open;
+        std::string d_filename;
+        FILE *d_fp;
+        int d_file_size;
 
-      // metadata tags
-      std::vector<gr::tag_t> d_tags;
+        // metadata tags
+        std::vector<gr::tag_t> d_tags;
 
-      // logger
-      gr::logger_ptr            d_logger;
+        // logger
+        gr::logger_ptr d_logger;
 
-    public:
-      typedef boost::shared_ptr<file_reader_base> sptr;
+      public:
+        typedef boost::shared_ptr<file_reader_base> sptr;
 
-      file_reader_base(size_t itemsize, gr::logger_ptr logger);
-      ~file_reader_base();
+        /**
+         * Consructor
+         *
+         * @param itemsize - per item size in bytes
+         * @param logger - parent file source logger instance
+         */
+        file_reader_base( size_t itemsize, gr::logger_ptr logger );
+        virtual ~file_reader_base();
 
-      virtual void open(const char *filename);
-      virtual bool is_open() { return d_is_open; }
-      virtual void close();
-      virtual int read(char *dest, int nitems);
-      virtual std::vector<gr::tag_t> get_tags() {
-       return d_tags;
-      }
-      virtual bool seek(long seek_point, int whence);
-      virtual bool eof() {
-        return (ftell(d_fp) == d_file_size);
-      }
+        /**
+         * Opens a new file. Closes current file if open
+         *
+         * @param filename - filename of file to open
+         */
+        virtual void open( const char *filename );
+
+        /**
+         * returns file open status
+         *
+         * @return bool - true if reader is open
+         */
+        virtual bool is_open()
+        {
+          return d_is_open;
+        }
+
+        /**
+         * Closes the open file
+         */
+        virtual void close();
+
+        /**
+         * Read items from file.
+         * Number of bytes read from file is based on #d_itemsize
+         *
+         * @param dest - destination storage for sample
+         * @param nitems - number of items to ready
+         * @return int - number of items read. 0 on EOF or error
+         */
+        virtual int read( char *dest, int nitems );
+
+        /**
+         * Returns tags vector
+         *
+         * @return vector<gr::tag_g> - tags vector
+         */
+        virtual std::vector<gr::tag_t> get_tags()
+        {
+          return d_tags;
+        }
+
+        /**
+         * Seek in the file source
+         *
+         * @param seek_point - offset position to seek to
+         * @param whence - refrence point for seek, see fseek
+         * @return bool - 0 or false on success
+         */
+        virtual bool seek( long seek_point, int whence );
+
+        /**
+         * Returns End Of File( EOF ) status
+         *
+         * @return bool - true if EOF
+         */
+        virtual bool eof()
+        {
+          return (ftell( d_fp ) == d_file_size);
+        }
     };
+  //end class file_reader_base
 
-  } // namespace sandia_utils
+  }// namespace sandia_utils
 } // namespace gr
 
 #endif /* INCLUDED_SANDIA_UTILS_FILE_READER_BASE_H */

@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,31 +90,44 @@ namespace gr {
 
         // set file start time and sampling rate
         d_writer->set_xdelta(1.0 / (double)d_rate);
+
+        // use utc start time
+        // time_t current_time = time(0);
+        // d_writer->set_xstart(double(current_time));
         d_writer->set_xstart(d_samp_time.dtime());
+
+        // add frequency keyword
+        std::string freq_keyword = "RFFREQ";
+        std::string freq_value = std::to_string(d_freq);
+        d_writer->add_keyword(freq_keyword,freq_value);
+
 
 
         d_N = 0;
       }
     } /* end open() */
 
-    void
-    file_writer_bluefile::close(){
-      if (d_initialized) {
+    void file_writer_bluefile::close()
+    {
+      if( d_initialized )
+      {
         GR_LOG_DEBUG(d_logger,boost::format("Closing bluefile %s") % d_filename);
 
         // close the file
+        d_writer->flush();
         d_writer->close();
 
         // cleanup
         delete d_writer;
+        d_writer = NULL;
 
         d_initialized = false;
       }
     }
 
-    int
-    file_writer_bluefile::write_impl(const void *in, int nitems){
-      int nwritten = d_writer->write(in, d_stype, d_itemsize*nitems) / d_itemsize;
+    int file_writer_bluefile::write_impl( const void *in, int nitems )
+    {
+      int nwritten = d_writer->write( in, d_stype, d_itemsize * nitems ) / d_itemsize;
 
       // increment counter
       d_N += nwritten;

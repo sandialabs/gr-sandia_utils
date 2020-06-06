@@ -23,28 +23,58 @@
 #endif
 
 #include <gnuradio/io_signature.h>
+#include <fstream>
+#include <boost/filesystem.hpp>
 #include "file_source_impl.h"
+#include "file_reader_raw_header.h"
 
+// conditional libraries
+#ifdef HAVE_BLUEFILE_LIB
+  #include "file_reader_bluefile.h"
+#endif
 
 namespace gr {
   namespace sandia_utils {
 
-    file_source::sptr
-    file_source::make(size_t itemsize, const char *filename, const char *type,
-      bool repeat, bool force_new)
+
+    /*!
+     * \brief Create a file source.
+     *
+     * Opens \p filename as a source of items into a flowgraph. The
+     * data is expected to be in the format specified by \p type. The
+     * \p itemsize of the block determines the conversion from bits
+     * to items.
+     *
+     * If \p repeat is turned on, the file will repeat the file after
+     * it's reached the end.
+     *
+     * \param itemsize  the size of each item in the file, in bytes
+     * \param filename  name of the file to source from
+     * \param type file type, Example Values = message, raw, raw_header, bluefile
+     * \param repeat  repeat file from start
+     * \param force_new Force open new file upon command, regardless of current status
+     */
+    file_source::sptr file_source::make(size_t itemsize, const char *filename, const char *type, bool repeat, bool force_new)
     {
-      return gnuradio::get_initial_sptr
-        (new file_source_impl(itemsize,filename,type,repeat,force_new));
+      return gnuradio::get_initial_sptr (new file_source_impl(itemsize,filename,type,repeat,force_new));
     }
 
-    /*
-     * The private constructor
+    /**
+     * Constructor
+     *
+     * @param itemsize - per item size in bytes
+     * @param filename - filename to open as source.
+     * @param type - type of file input, Example Values = message, raw, raw_header, bluefile
+     * @param repeat - repeat a single file over and over.
+     * @param force_new - Force open new file upon command, regardless of current status
      */
     file_source_impl::file_source_impl(size_t itemsize, const char *filename, const char *type,
       bool repeat, bool force_new)
       : gr::sync_block("file_source",
               gr::io_signature::make(0, 0, 0),
-              gr::io_signature::make(1, 1, itemsize)),
+              gr::io_signature::make(strcmp(type,"message")==0?0:1,
+                                     strcmp(type,"message")==0?0:1,
+                                     itemsize)),
         d_itemsize(itemsize),
         d_repeat(repeat),
         d_force_new(force_new),
@@ -54,31 +84,45 @@ namespace gr {
         d_tag_now(false),
         d_first_pass(true),
         d_file_queue_depth(DEFAULT_FILE_QUEUE_DEPTH),
-        d_method_count(0)
+        d_method_count(0),
+        d_msg_hop_period(0)
     {
+      d_output_type = std::string(type);
+      d_filename = std::string(filename);
+
       // get reader
-      if (strcmp(type,"raw") == 0) {
-        d_reader = file_reader_base::sptr(new file_reader_base(itemsize, d_logger));
+      if (strcmp(type,"message") == 0) {
+        // register output port
+        message_port_register_out(OUT_KEY);
       }
-      else if (strcmp(type,"raw_header")==0) {
-        d_reader = file_reader_base::sptr(new file_reader_raw_header(itemsize, d_logger));
-      }
-#ifdef HAVE_BLUEFILE_LIB
-      else if (strcmp(type,"bluefile")==0) {
-        d_reader = file_reader_base::sptr(new file_reader_bluefile(itemsize, d_logger));
-      }
-#endif
       else {
-        throw std::runtime_error(str(boost::format("Invalid file source format %s") % type));
-      }
+        // IQ type file input
 
-      // empty list of tags for now
-      d_tags.resize(0);
+        if (strcmp(type,"raw") == 0) {
+          d_reader = file_reader_base::sptr(new file_reader_base(itemsize, d_logger));
+        }
+        else if (strcmp(type,"raw_header")==0) {
+          d_reader = file_reader_base::sptr(new file_reader_raw_header(itemsize, d_logger));
+        }
+  #ifdef HAVE_BLUEFILE_LIB
+        else if (strcmp(type,"bluefile")==0) {
+          d_reader = file_reader_base::sptr(new file_reader_bluefile(itemsize, d_logger));
+        }
+  #endif
+        else {
+          throw std::runtime_error(str(boost::format("Invalid file source format %s") % type));
+        }
 
-      // open file if specified
-      if (filename[0] != '\0') {
-        this->open(filename,d_repeat);
-      }
+        // empty list of tags for now
+        d_tags.resize(0);
+
+        // open file if specified
+        if (filename[0] != '\0') {
+          GR_LOG_DEBUG(d_logger,str(boost::format("Opening IQ file: %s") % filename));
+          this->open(filename,d_repeat);
+        }
+
+      } //end else( IQ type file
 
       // register message ports
       message_port_register_in(pmt::intern("pdu"));
@@ -94,15 +138,128 @@ namespace gr {
     }
 
     bool
+    file_source_impl::start()
+    {
+      // start message generation thread
+      if (d_output_type == "message") {
+        // NOTE: d_finished should be something explicitly thread safe. But since
+        // nothing breaks on concurrent access, I'll just leave it as bool.
+        d_finished = false;
+        d_thread = boost::shared_ptr<gr::thread::thread>
+          (new gr::thread::thread(boost::bind(&file_source_impl::run, this)));
+      }
+
+      return block::start();
+    }
+
+    bool
+    file_source_impl::stop()
+    {
+      if (d_output_type == "message") {
+        // Shut down the thread
+        d_finished = true;
+        d_thread->interrupt();
+        d_thread->join();
+      }
+
+      return block::stop();
+    }
+
+    /**
+     * Thread function for message source
+     */
+    void file_source_impl::run()
+    {
+      // open file
+      std::string current_file = d_filename;
+      std::ifstream file;
+      GR_LOG_DEBUG(d_logger,str(boost::format("Opening message file: %s") % current_file));
+      file.open(current_file, std::ios::in | std::ios::binary);
+      if (not file.is_open()) {
+        throw std::runtime_error(str(boost::format("Unable to open file %s") % current_file));
+      }
+
+      while(!d_finished) {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(static_cast<long>(d_msg_hop_period)));
+        if(d_finished) {
+          // close file
+          file.close();
+
+          return;
+        }
+
+        // read in message length
+        uint32_t len;
+        file.read((char *)&len, sizeof(uint32_t));
+        if (file.fail()) {
+          GR_LOG_ERROR(d_logger,str(boost::format("Unable to read message length")));
+          break;
+        }
+        GR_LOG_DEBUG(d_logger,str(boost::format("Message length: %u") % len));
+
+        // read in message
+        if (len != 0) {
+          std::string st((size_t)len,0);
+          file.read((char *)st.c_str(),len);
+          if (file.fail()) {
+            GR_LOG_ERROR(d_logger,str(boost::format("Unable to read message")));
+            break;
+          }
+
+          // deserialize str
+          pmt::pmt_t msg;
+          try {
+             msg = pmt::deserialize_str(st);
+          }
+          catch (...) {
+            GR_LOG_ERROR(d_logger,str(boost::format("Unable to deserialize message")));
+            break;
+          }
+          message_port_pub(OUT_KEY, msg);
+
+          // check if end of file and whether to reopen
+          if (file.peek() == EOF) {
+            if (d_repeat) { file.seekg(0,file.beg); }
+            else { break; }
+          }
+        } // end len != 0;
+      } // end while (!d_finished)
+    } // end run()
+
+    // set message hop period
+    void
+    file_source_impl::set_msg_hop_period(int period_ms) {
+      gr::thread::scoped_lock lock(fp_mutex);
+      if (period_ms > 0) { d_msg_hop_period = period_ms; }
+    }
+
+    /**
+     * Seek in the file source
+     *
+     * @param seek_point - offset position to seek to
+     * @param whence - refrence point for seek, see fseek
+     * @return bool - 0 or false on success
+     */
+    bool
     file_source_impl::seek(long seek_point, int whence)
     {
       return d_reader->seek(seek_point,whence);
     }
 
 
+    /**
+     * manages opening a file
+     * If d_force_new, file is opened immediately
+     * If !d_force_new, file is added to the queue for later playing
+     *
+     * @param filename - file to open
+     * @param repeat - set the repeat mode.
+     */
     void
     file_source_impl::open(const char *filename, bool repeat)
     {
+      gr::thread::scoped_lock lock(d_setlock);
+
       // update repeat status
       d_repeat = repeat;
 
@@ -120,7 +277,7 @@ namespace gr {
           gr::thread::scoped_lock lock(fp_mutex);
 
           // clear queue
-          GR_LOG_ERROR(d_logger, "Maximum number of file entries reached...resetting");
+          GR_LOG_DEBUG(d_logger, "Maximum number of file entries reached...resetting");
           while (d_file_queue.size()) { d_file_queue.pop(); }
 
           // add new file and tag
@@ -136,8 +293,12 @@ namespace gr {
 
       // attempt to open next files
       open_next();
-    }
+    } //end open
 
+
+    /**
+     * Pop's and opens the next file from the file queue
+     */
     void
     file_source_impl::open_next()
     {
@@ -151,14 +312,15 @@ namespace gr {
 
         // remove file
         d_file_queue.pop();
-        // std::cout << d_file_queue.size() << std::endl;
       }
-    }
+    } //end open_next
 
     void
     file_source_impl::close()
     {
-      d_reader->close();
+      if (d_reader->is_open()) {
+        d_reader->close();
+      }
     }
 
     void
@@ -168,8 +330,16 @@ namespace gr {
       // d_tag_now = not pmt::equal(d_add_begin_tag, pmt::PMT_NIL);
     }
 
-    void
-    file_source_impl::handle_msg(pmt::pmt_t pdu) {
+    /**
+     * Handles incoming PDUs to the PDU command port. Incoming PDUs
+     * can be used to command a file open.
+     *
+     * Incomig PDU must contain a PMT dict that has a key entry of "fname".
+     * The associated value of "fname" will be used as the filename to open.
+     *
+     * @param pdu - incoming PDU to process
+     */
+    void file_source_impl::handle_msg(pmt::pmt_t pdu) {
       // is_pair() will pass both dictionaries and pairs (possible PDUs...)
       if (!pmt::is_pair(pdu)) {
         return;
@@ -183,29 +353,57 @@ namespace gr {
       }
 
       // we have a dictionary or a pair of which one element is a dict
-      pmt::pmt_t fname = pmt::dict_ref(pdu, FNAME_KEY, pmt::PMT_NIL);
-      if (not pmt::equal(fname,pmt::PMT_NIL)) {
-        this->open(pmt::symbol_to_string(fname).c_str(),d_repeat);
+      pmt::pmt_t fname_pmt;
+      fname_pmt = pmt::dict_ref(pdu, FNAME_KEY, pmt::PMT_NIL);
+      if (not pmt::equal(fname_pmt,pmt::PMT_NIL)) {
+        // to be safe, lets check if file even exists
+        std::string fname = pmt::symbol_to_string(fname_pmt);
+        if ( boost::filesystem::exists(fname) ) {
+          this->open(fname.c_str(),d_repeat);
+        }
+      }
+      else {
+        // could still be a PDU
+        pmt::pmt_t car = pmt::car(pdu);
+        fname_pmt = pmt::dict_ref(car,FNAME_KEY, pmt::PMT_NIL);
+        if (not pmt::equal(fname_pmt,pmt::PMT_NIL)) {
+          // to be safe, lets check if file even exists
+          std::string fname = pmt::symbol_to_string(fname_pmt);
+          if ( boost::filesystem::exists(fname) ) {
+            d_filename = fname;
+            if (d_output_type != "message") {
+              // attempt to open for processing
+              this->open(fname.c_str(),d_repeat);
+            }
+          }
+        }
       }
 
       d_method_count++;
       // if (d_method_count > d_file_queue_depth / 2) {
       //   GR_LOG_ERROR(d_logger,"too many messages in a row");
       // }
-    }
+    } //end handle_msg
 
-    int
-    file_source_impl::work(int noutput_items,
+    /**
+     * Gnu Radio entry point to perform work
+     *
+     * @param noutput_items - number of items that should be provided
+     * @param input_items -
+     * @param output_items -  storage for output items
+     * @return int - number of items produced
+     */
+    int file_source_impl::work(int noutput_items,
         gr_vector_const_void_star &input_items,
         gr_vector_void_star &output_items)
     {
+      // obtain exclusive access for the duration of this function
+      gr::thread::scoped_lock lock(d_setlock);
+
       int size = noutput_items;
       int nread = 0;
       char *out = (char *)output_items[0];
       // std::cout << "noutput_items = " << noutput_items << std::endl;
-
-      // obtain exclusive access for duration of this function
-      // gr::thread::scoped_lock lock(fp_mutex);
       d_method_count--;
 
       if (not d_reader->is_open()) {
@@ -258,8 +456,9 @@ namespace gr {
             d_reader->close();
             open_next();
           }
-          else if (d_reader->is_open()) { continue; }
-          else { break; }
+
+          // all done
+          break;
         }
         else {
           d_reader->seek(0,SEEK_SET);

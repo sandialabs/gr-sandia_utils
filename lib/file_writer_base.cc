@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,6 +96,7 @@ namespace gr {
       p->d_new_folder = false;
       p->d_freq = 0;
       p->d_nwritten = 0;
+      p->d_nwritten_total = 0;
 
       // initialize logger - use stdout if not specified
       if (logger == NULL) { p->d_logger = gr::logger_ptr(&std::cout);}
@@ -119,6 +120,7 @@ namespace gr {
 
       // setup counters
       d_nwritten = 0;
+      d_nwritten_total = 0;
       d_nremaining = d_nsamples;
 
       // generate folder if necessary
@@ -135,20 +137,25 @@ namespace gr {
       d_is_started = true;
     }
 
-    void
-    file_writer_base::stop()
+    void file_writer_base::stop()
     {
       // use virtual method to properly close file
       close();
 
       // Increment file number
       d_file_num++;
+      if (d_file_num_rollover > 0) { d_file_num %= (uint64_t)d_file_num_rollover; }
 
-      // signal for update to be send_update
-      d_callback(d_filename);
+      // signal for update to be sent only if data has been written
+      if (d_nwritten) {
+        d_callback(d_filename,d_samp_time,double(d_freq),double(d_rate));
+      }
 
       // clear file currently being written
       d_filename = "";
+
+      // reset number of samples written for the current file
+      d_nwritten = 0;
 
       // clear flag
       d_is_started = false;
@@ -165,7 +172,9 @@ namespace gr {
           uint64_t ntowrite = std::min(d_nremaining, nleft);
 
           // write samples
-          d_nwritten += (uint64_t)write_impl((void *)p,ntowrite);
+          uint64_t nwritten = (uint64_t)write_impl((void *)p,ntowrite);
+          d_nwritten += nwritten;
+          d_nwritten_total += nwritten;
           p += (ntowrite*d_itemsize);
 
           // update
@@ -198,7 +207,9 @@ namespace gr {
       else
       {
         // single file - write all samples
-        d_nwritten += (uint64_t)write_impl((void *)p,nitems);
+        uint64_t nwritten = (uint64_t)write_impl((void *)p,nitems);
+        d_nwritten += nwritten;
+        d_nwritten_total += nwritten;
       }
     }
 

@@ -30,8 +30,24 @@ namespace gr {
   namespace sandia_utils {
 
     /*!
-     * \brief <+description of block+>
+     * \brief GNU Radio Source from file
      * \ingroup sandia_utils
+     *
+     * Generate data from an input file.
+     *
+     * This block is functionally equivalent to the in-tree file source block with a
+     * message port extension to specify a new input file.  If the 'Force New File'
+     * option is chosen, the current file being processed will be closed and the new
+     * file opened when commanded.
+     *
+     * Adding file tags will cause the stream tags available based on the file type
+     * to be added to the output stream at the first sample of the file.  Similarly, if
+     * the beginning tags are populated, the first sample of every file will contain
+     * that tag.
+     *
+     * PDU sink port allows remote control of the file to be played. PDU must contain
+     * a dict with the key of fname. The value associated with fname is the file name
+     * that will be replayed.
      *
      */
     class SANDIA_UTILS_API file_source : virtual public gr::sync_block
@@ -52,7 +68,7 @@ namespace gr {
        *
        * \param itemsize	the size of each item in the file, in bytes
        * \param filename	name of the file to source from
-       * \param type file type
+       * \param type file type, Example Values = message, raw, raw_header, bluefile
        * \param repeat	repeat file from start
        * \param force_new Force open new file upon command, regardless of current status
        */
@@ -64,6 +80,7 @@ namespace gr {
          *
          * \param seek_point	sample offset in file
          * \param whence	one of SEEK_SET, SEEK_CUR, SEEK_END (man fseek)
+         * @return bool - 0 or false on success
          */
         virtual bool seek(long seek_point, int whence) = 0;
 
@@ -103,6 +120,16 @@ namespace gr {
          * \param tag   Add tags on first sample of file open
          */
          virtual void add_file_tags(bool tag) = 0;
+
+         /*!
+          * \brief Set the message hop period
+          *
+          * Set the amount of time between message emissions from a file in
+          * milliseconds.
+          *
+          * \param period_ms  Emission period (ms)
+          */
+          virtual void set_msg_hop_period(int period_ms) = 0;
     };
 
   } // namespace sandia_utils

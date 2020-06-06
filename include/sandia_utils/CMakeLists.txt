@@ -43,5 +43,6 @@ install(FILES
     file_source.h
     constants.h
     interleaved_short_to_complex.h
-    complex_to_interleaved_short.h DESTINATION include/sandia_utils
+    complex_to_interleaved_short.h
+    tagged_bits_to_bytes.h DESTINATION include/sandia_utils
 )

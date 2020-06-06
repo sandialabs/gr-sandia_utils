@@ -57,11 +57,16 @@ list(APPEND sandia_utils_sources
     message_vector_raster_file_sink_impl.cc
     file_source_impl.cc
     file_reader_base.cc
+    file_reader_raw_header.cc
     interleaved_short_to_complex_impl.cc
     complex_to_interleaved_short_impl.cc
+    tagged_bits_to_bytes_impl.cc
 )
 if(BLUEFILE_FOUND)
-  list(APPEND sandia_utils_sources file_writer_bluefile.cc )
+  list(APPEND sandia_utils_sources
+    file_writer_bluefile.cc
+    file_reader_bluefile.cc
+  )
 endif(BLUEFILE_FOUND)
 
 set(sandia_utils_sources "${sandia_utils_sources}" PARENT_SCOPE)
@@ -71,17 +76,15 @@ if(NOT sandia_utils_sources)
 endif(NOT sandia_utils_sources)
 
 
+########################################################################
+# Add library and link libraries
+########################################################################
 add_library(gnuradio-sandia_utils SHARED ${sandia_utils_sources})
-target_link_libraries(gnuradio-sandia_utils ${Boost_LIBRARIES} ${LOG4CPP_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
-########################################################################
-# BlueFile Sources and Library
-########################################################################
+set(required_libs ${Boost_LIBRARIES} ${LOG4CPP_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
 if (BLUEFILE_FOUND)
-MESSAGE(STATUS "Adding bluefile libraries to target")
-#   target_link_libraries(gnuradio-sandia_utils ${Boost_LIBRARIES}
-#                         ${GNURADIO_ALL_LIBRARIES} bluefilecxx bluefile)
-  target_link_libraries(gnuradio-sandia_utils bluefilecxx bluefile)
+  list(APPEND required_libs ${BLUEFILE_LIBRARIES})
 endif(BLUEFILE_FOUND)
+target_link_libraries(gnuradio-sandia_utils ${required_libs})
 
 set_target_properties(gnuradio-sandia_utils PROPERTIES DEFINE_SYMBOL "gnuradio_sandia_utils_EXPORTS")
 add_dependencies(gnuradio-sandia_utils
@@ -112,6 +115,7 @@ include_directories(${CPPUNIT_INCLUDE_DIRS})
 list(APPEND test_sandia_utils_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/test_sandia_utils.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/qa_sandia_utils.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/qa_file_sink.cc
 )
 
 add_executable(test-sandia_utils ${test_sandia_utils_sources})
@@ -121,6 +125,7 @@ target_link_libraries(
   ${GNURADIO_RUNTIME_LIBRARIES}
   ${Boost_LIBRARIES}
   ${CPPUNIT_LIBRARIES}
+  gnuradio-blocks
   gnuradio-sandia_utils
 )
 

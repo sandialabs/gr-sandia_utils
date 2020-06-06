@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ namespace gr {
     {
     public:
       typedef boost::shared_ptr<file_writer_base> sptr;
-      typedef boost::function<void(std::string)> callback;
+      typedef boost::function<void(std::string,epoch_time,double,double)> callback;
 
       /*!
        * \brief Return a shared_ptr to a new instance of sandia_utils::file_sink_base.
@@ -92,13 +92,13 @@ namespace gr {
        * \brief Set center frequency
        *
        */
-      void set_freq(int freq) { d_freq = freq; }
+      void set_freq(uint64_t freq) { d_freq = freq; }
 
       /*!
        * \brief GSet center frequency
        *
        */
-      int get_freq() { return d_freq; }
+      uint64_t get_freq() { return d_freq; }
 
       /*!
        * \brief Set sampling rate
@@ -133,6 +133,22 @@ namespace gr {
        *
        */
       int get_nsamples() { return d_nsamples; }
+
+      /*!
+       * \brief Set file number rollover
+       *
+       */
+      void set_file_num_rollover(int rollover) {
+        boost::recursive_mutex::scoped_lock lock(d_mutex);
+
+        d_file_num_rollover = rollover;
+      }
+
+      /*!
+       * \brief Get file number rollover
+       *
+       */
+      int get_file_num_rollover() { return d_file_num_rollover; }
 
       /*!
        * \brief Start file writer
@@ -205,7 +221,7 @@ namespace gr {
       double                d_T;
 
       // center frequency
-      int                   d_freq;
+      uint64_t                   d_freq;
 
       // base output directory
       std::string           d_out_dir;
@@ -228,6 +244,7 @@ namespace gr {
       uint64_t              d_file_num = 0;
 
       // number of samples written and remaining
+      uint64_t              d_nwritten_total;
       uint64_t              d_nwritten;
       uint64_t              d_file_size;
       uint64_t              d_nremaining;
@@ -243,6 +260,9 @@ namespace gr {
 
       // state flag
       bool                      d_is_started;
+
+      // file number rollover - value less than 0 indicates no rollover
+      int                       d_file_num_rollover;
 
     private:
       void gen_folder(epoch_time& start_time);

@@ -35,7 +35,10 @@ GR_PYTHON_INSTALL(
     message_file_debug.py
     python_interface_sink.py
     python_message_interface.py
-    file_monitor.py DESTINATION ${GR_PYTHON_DIR}/sandia_utils
+    file_archiver.py
+    csv_reader.py
+    csv_writer.py
+    rftap_encap.py DESTINATION ${GR_PYTHON_DIR}/sandia_utils
 )
 
 ########################################################################
@@ -51,6 +54,11 @@ GR_ADD_TEST(qa_uhd_timed_cordic_emulator ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SO
 GR_ADD_TEST(qa_message_vector_file_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_message_vector_file_sink.py)
 GR_ADD_TEST(qa_message_vector_raster_file_sink ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_message_vector_raster_file_sink.py)
 GR_ADD_TEST(qa_file_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_file_source.py)
+#GR_ADD_TEST(qa_file_source ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_file_sink.py)
 GR_ADD_TEST(qa_interleaved_short_to_complex ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_interleaved_short_to_complex.py)
-GR_ADD_TEST(qa_file_monitor ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_file_monitor.py)
+GR_ADD_TEST(qa_file_archiver ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_file_archiver.py)
 GR_ADD_TEST(qa_complex_to_interleaved_short ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_complex_to_interleaved_short.py)
+GR_ADD_TEST(qa_tagged_bits_to_bytes ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tagged_bits_to_bytes.py)
+GR_ADD_TEST(qa_csv_reader ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_csv_reader.py)
+GR_ADD_TEST(qa_csv_writer ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_csv_writer.py)
+GR_ADD_TEST(qa_rftap_encap ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_rftap_encap.py)

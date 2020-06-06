@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<block>
+  <name>CSV Reader</name>
+  <key>sandia_utils_csv_reader</key>
+  <category>[Sandia]/Sandia Utilities</category>
+  <import>import sandia_utils</import>
+  <make>sandia_utils.csv_reader($file, $has_header, $data_type,
+    $period,$start_delay,$repeat)
+  </make>
+
+  <callback>set_fname($file)</callback>
+  <callback>set_period($period)</callback>
+  <callback>set_repeat($repeat)</callback>
+  <callback>set_start_delay($start_delay)</callback>
+  <param>
+		<name>File</name>
+		<key>file</key>
+		<value></value>
+		<type>file_open</type>
+	</param>
+
+  <param>
+    <name>Header?</name>
+    <key>has_header</key>
+    <value>True</value>
+    <type>enum</type>
+    <option>
+      <name>Yes</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>No</name>
+      <key>False</key>
+    </option>
+  </param>
+
+  <param>
+    <name>Data Type</name>
+    <key>data_type</key>
+    <value>'uint8'</value>
+    <type>enum</type>
+    <option>
+      <name>Unsigned 8-bit Integer</name>
+      <key>'uint8'</key>
+    </option>
+    <option>
+      <name>Signed 8-bit Integer</name>
+      <key>'int8'</key>
+    </option>
+    <option>
+      <name>Unsigned 16-bit Integer</name>
+      <key>'uint16'</key>
+    </option>
+    <option>
+      <name>Signed 8-bit Integer</name>
+      <key>'int16'</key>
+    </option>
+    <option>
+      <name>Unsigned 32-bit Integer</name>
+      <key>'uint32'</key>
+    </option>
+    <option>
+      <name>Signed 32-bit Integer</name>
+      <key>'int32'</key>
+    </option>
+
+    <option>
+      <name>Single Precision (Float)</name>
+      <key>'float'</key>
+    </option>
+    <option>
+      <name>Complex Single Precision (Complex Float)</name>
+      <key>'complex float'</key>
+    </option>
+    <option>
+      <name>Double Precision (Double)</name>
+      <key>'double'</key>
+    </option>
+    <option>
+      <name>Complex Double Precision (Complex Double)</name>
+      <key>'complex double'</key>
+    </option>
+  </param>
+
+  <param>
+    <name>Message Period (ms)</name>
+    <key>period</key>
+    <value>1000</value>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>Start Delay (ms)</name>
+    <key>start_delay</key>
+    <value>0</value>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>Repeat?</name>
+    <key>repeat</key>
+    <value>False</value>
+    <type>bool</type>
+    <hide>part</hide>
+    <option>
+      <name>True</name>
+      <key>True</key>
+    </option>
+    <option>
+      <name>False</name>
+      <key>False</key>
+    </option>
+  </param>
+
+  <source>
+    <name>out</name>
+    <type>message</type>
+  </source>
+
+  <doc>
+Read data from CSV file.
+
+A header in the first row of the file is used to specify the format
+of the contents of the file.  Metadata fields are specified in the first
+columns of the file while the last columns of the file that do not have
+any header information associated with them will be used to populate the
+second element in the PDU as a uniform vector based on the selected data
+type.
+
+The time before the first message is output can be set by setting the
+start delay to a positive value greater than 0.  If this value is set to zero,
+the first message will be output at the transmission period from start.
+
+If the file is said not to contain a header, all columns will attempt to
+be read into a uniform vector of the specified type.
+
+Note: 'Empty' header fields will not generate metadata fields
+
+Note: u64 and s64 vector elements are not fully supported in version
+3.7.13.3 and thus are not supported here yet.
+
+Supported metadata types:
+  * string
+  * bool (True/False)
+  * long
+  * uint64
+  * float
+  * double
+  * complex
+
+Supported data types:
+  * uint8
+  * int8
+  * uint16
+  * int16
+  * uint32
+  * int32
+  * uint64
+  * int64
+  * float
+  * complex float
+  * double
+  * complex double
+
+Sample file format (uint8 data type):
+
+field0(string), , field1(bool), field2(float)
+A,B,True,30.72e6,65,66,67,68,69,70
+
+Output:
+  (((field2 . 3.072e+07) (field1 . #t) (field0 . A)) . #[A B C D E F])
+</doc>
+
+</block>

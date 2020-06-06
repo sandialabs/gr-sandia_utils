@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 National Technology & Engineering Solutions of Sandia, LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government retains certain rights in this software.
+ * Copyright 2017 <+YOU OR YOUR COMPANY+>.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,9 @@
 
 #include <gnuradio/io_signature.h>
 #include "file_sink_impl.h"
+#include <boost/filesystem/path.hpp>
 
+namespace fs = boost::filesystem;
 namespace gr {
   namespace sandia_utils {
 
@@ -45,29 +47,20 @@ namespace gr {
                                    uint64_t nsamples, int rate,
                                    std::string out_dir, std::string name_spec)
       : gr::sync_block("file_sink",
-                       gr::io_signature::make(1, 1, itemsize),
+                       gr::io_signature::make(data_type=="message"?0:1,
+                                              data_type=="message"?0:1,
+                                              data_type=="message"?0:itemsize),
                        gr::io_signature::make(0, 0, 0)),
+        d_type(data_type),
         d_itemsize(itemsize),
         d_mode(mode),
         d_nsamples(nsamples),
         d_out_dir(out_dir),
         d_name_spec(name_spec)
     {
-      // initialize writer
-      d_file_writer = file_writer_base::make(data_type, file_type, itemsize,
-                                             nsamples, rate, out_dir, name_spec,
-                                             d_logger);
-
-      // register update callback
-      d_file_writer->register_callback(boost::bind(&file_sink_impl::send_update,this,_1));
-
-      // compute sampling period - needed to determine how many samples to
-      // discard when starting recording
-      d_T = 1.0/d_file_writer->get_rate();
-
       // set initial local values
       d_recording = false;
-      d_recording_changed = false;
+      d_check_start = false;
       d_issue_start = false;
       d_ndiscard = 0;
       d_burst_state = 0;
@@ -75,19 +68,46 @@ namespace gr {
       // align on second boundary by default
       d_align = true;
 
-      // set time to system time by default
-      // initialize time of next incoming sample to be current system time
-      // if tag is included, time will be updated
-      // any other time a tag is included, if the system is currently
-      // recording, the state will be reset
-      // the fractional portion will be set to zero so no samples
-      // are discarded
-      struct timeval tp;
-      gettimeofday(&tp, NULL);
-      d_samp_time.set((uint64_t)tp.tv_sec,0.0,1.0/(double)d_file_writer->get_rate());
+      if (d_type == "message") {
+        // register message handlers
+        message_port_register_in(IN_KEY);
+        set_msg_handler(IN_KEY, boost::bind(&file_sink_impl::handle_msg, this, _1));
+
+        // open output file
+        fs::path temp_dir = fs::path(d_out_dir);
+        if (not fs::is_directory(temp_dir)) {
+          throw std::runtime_error("Invalid output path");
+        }
+        fs::path outfile = temp_dir / d_name_spec;
+        d_msg_file.open(outfile.string().c_str(),std::ifstream::binary);
+      }
+      else {
+        // initialize writer
+        d_file_writer = file_writer_base::make(data_type, file_type, itemsize,
+                                               nsamples, rate, out_dir, name_spec,
+                                               d_logger);
+
+        // register update callback
+        d_file_writer->register_callback(boost::bind(&file_sink_impl::send_update,this,_1,_2,_3,_4));
+
+        // compute sampling period - needed to determine how many samples to
+        // discard when starting recording
+        d_T = 1.0/d_file_writer->get_rate();
+
+        // set time to system time by default
+        // initialize time of next incoming sample to be current system time
+        // if tag is included, time will be updated
+        // any other time a tag is included, if the system is currently
+        // recording, the state will be reset
+        // the fractional portion will be set to zero so no samples
+        // are discarded
+        struct timeval tp;
+        gettimeofday(&tp, NULL);
+        d_samp_time.set((uint64_t)tp.tv_sec,0.0,1.0/(double)d_file_writer->get_rate());
+      }
 
       // setup output message portion
-      message_port_register_out(FILE_MSG_KEY);
+      message_port_register_out(PDU_KEY);
     }
 
     /*
@@ -95,7 +115,7 @@ namespace gr {
      */
     file_sink_impl::~file_sink_impl()
     {
-      /* NOOP */
+      if (d_type == "message") { d_msg_file.close(); }
     }
 
     /*
@@ -163,20 +183,32 @@ namespace gr {
 #endif /* GR_CTRLPORT */
     }
 
-    int
-    file_sink_impl::work(int noutput_items,
+    void
+    file_sink_impl::handle_msg(pmt::pmt_t msg)
+    {
+      std::string str = pmt::serialize_str(msg);
+      uint32_t len = (uint32_t)str.length();
+
+      // write to file
+      d_msg_file.write((char *)&len,sizeof(uint32_t));
+      d_msg_file.write(str.c_str(), str.length());
+    }
+
+    int file_sink_impl::work(int noutput_items,
         gr_vector_const_void_star &input_items,
         gr_vector_void_star &output_items)
     {
       boost::recursive_mutex::scoped_lock lock(d_mutex);
 
+      // should not be called but just in case
+      if (d_type == "message") { return 0; }
+
       const void *in = (const void*) input_items[0];
 
-      // number of items processed
-      int nprocessed = noutput_items;
+      // number of items to consume
       int ntoconsume = noutput_items;
 
-      // get all tags
+      // get all tags - consume up to the last tag
       uint64_t start = nitems_read(0);
       uint64_t end = start + noutput_items;
       std::vector<tag_t> tags;
@@ -187,12 +219,15 @@ namespace gr {
         ntoconsume = do_handle_tags(tags,start,do_stop,noutput_items);
       }
 
+      // number of items to process
+      int nprocessed = ntoconsume;
+
       // manual recording mode
       if (d_mode == MANUAL)
       {
         // check if start recording command needs to be issued
         if (d_recording) {
-          if (d_recording_changed)
+          if (d_check_start)
           {
             // compute number of samples to discard
             if ((not d_align) or ( d_samp_time.epoch_frac() - d_T <= 0.0))
@@ -208,7 +243,7 @@ namespace gr {
                     % d_samp_time.epoch_sec() % d_samp_time.epoch_frac() % d_ndiscard);
             }
 
-            d_recording_changed = false;
+            d_check_start = false;
             d_issue_start = true;
           }
 
@@ -230,8 +265,10 @@ namespace gr {
             }
 
             // write data
-            d_file_writer->write(in,ntoconsume);
-            nprocessed = ntoconsume;
+            if (d_file_writer->is_started()) {
+              d_file_writer->write(in,ntoconsume);
+              nprocessed = ntoconsume;
+            }
 
             // signaled to stop - start will be issued on next tag
             if (do_stop) { d_file_writer->stop(); do_stop = false; }
@@ -267,7 +304,7 @@ namespace gr {
           }
 
           get_tags_in_range(burst_tags,0,start,end,BURST_STOP_KEY);
-          if (burst_tags.size())
+          if (burst_tags.size() or do_stop)
           {
             GR_LOG_DEBUG(d_logger,"Burst stop tag received.  Stopping burst writer...\n");
 
@@ -297,11 +334,34 @@ namespace gr {
       return nprocessed;
     }
 
+    /**
+     * Lifecycle stop method
+     *
+     */
+    bool file_sink_impl::stop()
+    {
+      if( d_type != "message" )
+      {
+        // ensure file writer stops
+        d_file_writer->stop();
+      }
+      else
+      {
+        d_msg_file.flush();
+        d_msg_file.close();
+
+      }
+
+      return true;
+    } //end stop
+
     int
     file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
       uint64_t starting_offset, bool& do_stop, int noutput_items)
     {
       int ntoconsume = noutput_items;
+
+      if (not tags.size()) { return ntoconsume; }
 
       // process all tags, and use the last offset observed to determine
       // how many samples to consume
@@ -328,7 +388,7 @@ namespace gr {
         }
         else if (pmt::equal(tags[tag_num].key, FREQ_KEY))
         {
-          d_file_writer->set_freq((int)pmt::to_double(tags[tag_num].value));
+          d_file_writer->set_freq((uint64_t)pmt::to_double(tags[tag_num].value));
           GR_LOG_DEBUG(d_logger,boost::format("Frequency set to %d Hz") % d_file_writer->get_freq());
 
           config_changed = true;
@@ -356,19 +416,31 @@ namespace gr {
       // configuration change is the same as the starting offset
       GR_LOG_DEBUG(d_logger,boost::format("config changed %d, change offset %ld, writer started %d")  %
         config_changed % change_offset % d_file_writer->is_started());
-      if (config_changed and (change_offset == starting_offset) and not d_file_writer->is_started()) {
-        GR_LOG_DEBUG(d_logger,"issuing start command");
-        d_recording_changed = true;
-        // d_issue_start = true;
-        ntoconsume = noutput_items;
-      }
+      if (config_changed) {
+        if ((change_offset == starting_offset) and not d_file_writer->is_started()) {
+          GR_LOG_DEBUG(d_logger,"issuing start command");
 
-      // The command to stop the writer is issued when any tags that require
-      // reconfiguration are observed while the writer is started
-      if (config_changed and d_file_writer->is_started()) {
-        GR_LOG_DEBUG(d_logger,"issuing stop command");
-        do_stop = true;
-        ntoconsume = change_offset - starting_offset;
+          // signal to begin recording when ready
+          d_check_start = true;
+          d_issue_start = false;
+
+          ntoconsume = noutput_items;
+        }
+        else {
+          if (d_file_writer->is_started()) {
+            // The command to stop the writer is issued when any tags that require
+            // reconfiguration are observed while the writer is started
+            GR_LOG_DEBUG(d_logger,"issuing stop command");
+            do_stop = true;
+          }
+
+          // setting to not issue start!
+          d_issue_start = false;
+          d_check_start = false;
+
+          // move to the last configuration change tag
+          ntoconsume = change_offset - starting_offset;
+        }
       }
 
       // the number of items that can be consumed is equal to the offset of the
@@ -398,9 +470,9 @@ namespace gr {
       else if (not d_recording && state)
       {
         // start recording
-        d_issue_start = true;
+        d_issue_start = false;
         d_recording = true;
-        d_recording_changed = true;
+        d_check_start = true;
       }
     }
 
@@ -444,7 +516,9 @@ namespace gr {
     void
     file_sink_impl::set_gen_new_folder(bool value)
     {
-      d_file_writer->set_gen_new_folder(value);
+      if (d_type != "message") {
+        d_file_writer->set_gen_new_folder(value);
+      }
     }
 
   } /* namespace sandia_utils */
