@@ -22,9 +22,10 @@ FIND_LIBRARY(
           /usr/local/lib64
           /usr/lib
           /usr/lib64
-)
+          )
+
+include("${CMAKE_CURRENT_LIST_DIR}/sandia_utilsTarget.cmake")
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(SANDIA_UTILS DEFAULT_MSG SANDIA_UTILS_LIBRARIES SANDIA_UTILS_INCLUDE_DIRS)
 MARK_AS_ADVANCED(SANDIA_UTILS_LIBRARIES SANDIA_UTILS_INCLUDE_DIRS)
-

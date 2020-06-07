@@ -1,0 +1,19 @@
+id: sandia_utils_compute_stats
+label: Compute Stats
+category: '[Sandia]/Sandia Utilities'
+
+inputs:
+-   domain: message
+    id: pdu_in
+    optional: true
+
+outputs:
+-   domain: message
+    id: pdu_out
+    optional: true
+
+templates:
+  imports: import sandia_utils
+  make: sandia_utils.compute_stats()
+
+file_format: 1

@@ -30,9 +30,9 @@
 
 class __GR_ATTR_EXPORT qa_sandia_utils
 {
- public:
-  //! return suite of tests for all of gr-filter directory
-  static CppUnit::TestSuite *suite();
+public:
+    //! return suite of tests for all of gr-filter directory
+    static CppUnit::TestSuite* suite();
 };
 
 #endif /* _QA_SANDIA_UTILS_H_ */

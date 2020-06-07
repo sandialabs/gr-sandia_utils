@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2018 <+YOU OR YOUR COMPANY+>.
+# Copyright 2019 gr-sandia_utils author.
 #
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +19,15 @@
 # Boston, MA 02110-1301, USA.
 #
 
+
 import numpy
 from gnuradio import gr
 
 class max_every_n(gr.decim_block):
     """
-    docstring for block max_every_n
+    Max Every N
+
+    Output the maximum input value for every N input samples
     """
     def __init__(self, n):
         gr.decim_block.__init__(self,

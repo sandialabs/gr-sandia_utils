@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2018 <+YOU OR YOUR COMPANY+>.
+ * Copyright 2020 gr-sandia_utils author.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,39 +21,39 @@
 #ifndef INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_FILE_SINK_IMPL_H
 #define INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_FILE_SINK_IMPL_H
 
-#include <sandia_utils/message_vector_file_sink.h>
 #include <pmt/pmt.h>
+#include <sandia_utils/message_vector_file_sink.h>
 
-#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include<string>
+#include <boost/thread/thread.hpp>
+#include <string>
 
 namespace gr {
-  namespace sandia_utils {
+namespace sandia_utils {
 
-    class message_vector_file_sink_impl : public message_vector_file_sink
-    {
-     private:
-       pmt::pmt_t       d_mp_name;
+class message_vector_file_sink_impl : public message_vector_file_sink
+{
+private:
+    pmt::pmt_t d_mp_name;
 
-       // file variables
-       std::string      d_filename;
-       std::string      d_filename_tmp;
-       bool             d_file_is_new;
+    // file variables
+    std::string d_filename;
+    std::string d_filename_tmp;
+    bool d_file_is_new;
 
-       // protection mutex
-       boost::mutex     d_mutex;
+    // protection mutex
+    boost::mutex d_mutex;
 
-     public:
-      message_vector_file_sink_impl(std::string filename);
-      ~message_vector_file_sink_impl();
+public:
+    message_vector_file_sink_impl(std::string filename);
+    ~message_vector_file_sink_impl();
 
-      std::string get_filename();
+    std::string get_filename();
 
-      void handle_msg(pmt::pmt_t);
-    };
+    void handle_msg(pmt::pmt_t);
+};
 
-  } // namespace sandia_utils
+} // namespace sandia_utils
 } // namespace gr
 
 #endif /* INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_FILE_SINK_IMPL_H */

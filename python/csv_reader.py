@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2019 gr-sandia_utils author.
+# Copyright 2020 gr-sandia_utils author.
 #
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,17 +19,18 @@
 # Boston, MA 02110-1301, USA.
 #
 
+
 import numpy
-import pmt
-import threading
-import time
+from gnuradio import gr
 import os
 import re
+import pmt
+import threading
 import math
-from gnuradio import gr
+
 
 class csv_reader(gr.sync_block):
-    '''
+    """
     Read data from CSV file.
 
     A header in the first row of the file is used to specify the format
@@ -56,6 +57,7 @@ class csv_reader(gr.sync_block):
       * double
       * complex
       * time (car = uint64, cdr = double)
+      * time_tuple(0 - uint64, 1 - double)
 
     Supported data types:
       * uint8
@@ -76,17 +78,25 @@ class csv_reader(gr.sync_block):
 
     Output:
       (((field2 . 3.072e+07) (field1 . #t) (field0 . A)) . #[A B C D E F])
-    '''
-    def __init__(self,fname='', has_header = True, data_type = 'uint8',
-                 period = 1000, start_delay = 0, repeat = True):
-        gr.sync_block.__init__(self,"CSV Reader", \
-                in_sig=None, out_sig=None)
+    """
+
+    def __init__(self, fname='', has_header=True, data_type='uint8',
+                 period=1000, start_delay=0, repeat=True):
+        gr.sync_block.__init__(self, "CSV Reader",
+                               in_sig=None, out_sig=None)
         self.file = fname
         self.has_header = has_header
         self.data_type = data_type
         self.period = period
         self.repeat = repeat
         self.start_delay = start_delay
+
+        # setup logger
+        logger_name = 'gr_log.' + self.to_basic_block().alias()
+        if logger_name in gr.logger_get_names():
+            self.log = gr.logger(logger_name)
+        else:
+            self.log = gr.logger('log')
 
         # metadata field mappings
         self.metadata_mappings = {'string': lambda x: pmt.intern(x),
@@ -96,25 +106,27 @@ class csv_reader(gr.sync_block):
                                   'float': lambda x: pmt.from_float(float(x)),
                                   'double': lambda x: pmt.from_double(float(x)),
                                   'complex': lambda x: pmt.from_complex(complex(x)),
-                                  'time': lambda x: pmt.cons(pmt.from_uint64(int(math.modf(float(x))[1])), \
-                                                             pmt.from_double(math.modf(float(x))[0]))
+                                  'time': lambda x: pmt.cons(pmt.from_uint64(int(math.modf(float(x))[1])),
+                                                             pmt.from_double(math.modf(float(x))[0])),
+                                  'time_tuple': lambda x: pmt.make_tuple(pmt.from_uint64(int(math.modf(float(x))[1])),
+                                                                         pmt.from_double(math.modf(float(x))[0]))
                                   }
 
-        self.data_type_mappings = {'uint8': lambda x: pmt.init_u8vector(len(x),[int(y) for y in x]),
-                                   'int8': lambda x: pmt.init_s8vector(len(x),[int(y) for y in x]),
-                                   'uint16': lambda x: pmt.init_u16vector(len(x),[int(y) for y in x]),
-                                   'int16': lambda x: pmt.init_s16vector(len(x),[int(y) for y in x]),
-                                   'uint32': lambda x: pmt.init_u32vector(len(x),[int(y) for y in x]),
-                                   'int32': lambda x: pmt.init_s32vector(len(x),[int(y) for y in x]),
-                                   'float': lambda x: pmt.init_f32vector(len(x),[float(y) for y in x]),
-                                   'complex float': lambda x: pmt.init_c32vector(len(x),[complex(y) for y in x]),
-                                   'double': lambda x: pmt.init_f64vector(len(x),[float(y) for y in x]),
-                                   'complex double': lambda x: pmt.init_c64vector(len(x),[complex(y) for y in x])
+        self.data_type_mappings = {'uint8': lambda x: pmt.init_u8vector(len(x), [int(y) for y in x]),
+                                   'int8': lambda x: pmt.init_s8vector(len(x), [int(y) for y in x]),
+                                   'uint16': lambda x: pmt.init_u16vector(len(x), [int(y) for y in x]),
+                                   'int16': lambda x: pmt.init_s16vector(len(x), [int(y) for y in x]),
+                                   'uint32': lambda x: pmt.init_u32vector(len(x), [int(y) for y in x]),
+                                   'int32': lambda x: pmt.init_s32vector(len(x), [int(y) for y in x]),
+                                   'float': lambda x: pmt.init_f32vector(len(x), [float(y) for y in x]),
+                                   'complex float': lambda x: pmt.init_c32vector(len(x), [complex(y) for y in x]),
+                                   'double': lambda x: pmt.init_f64vector(len(x), [float(y) for y in x]),
+                                   'complex double': lambda x: pmt.init_c64vector(len(x), [complex(y) for y in x])
                                    }
 
         # ensure valid data type
         if self.data_type not in self.data_type_mappings.keys():
-          raise ValueError('Invalid data type {}'.format(data_type))
+            raise ValueError('Invalid data type {}'.format(data_type))
 
         # set file name
         self.set_fname(self.file)
@@ -132,126 +144,126 @@ class csv_reader(gr.sync_block):
         self.lock = threading.Lock()
 
     def parse_line(self, line):
-      # parse values
-      values = [x.lstrip() for x in line.rstrip().rstrip(',').split(',')]
+        # parse values
+        values = [x.lstrip() for x in line.rstrip().rstrip(',').split(',')]
 
-      # add metadata
-      dict = pmt.make_dict()
-      ind = 0
-      for t in self.header:
-        if t != ():
-          try:
-            dict = pmt.dict_add(dict, t[0], t[1](values[ind]))
-          except Exception as e:
-            print "Unable to parse header: {}".format(e)
+        # add metadata
+        dict = pmt.make_dict()
+        ind = 0
+        for t in self.header:
+            if t != ():
+                try:
+                    dict = pmt.dict_add(dict, t[0], t[1](values[ind]))
+                except Exception as e:
+                    self.log.error("Unable to parse header: {}".format(e))
 
-        # move to next element
-        ind += 1
+            # move to next element
+            ind += 1
 
-      # load data
-      data = values[ind:]
-      if len(data):
-        try:
-          data = self.data_type_mappings[self.data_type](values[ind:])
-        except Exception as e:
-          print "Unable to parse data: {}".format(e)
-          data = pmt.PMT_NIL
-      else:
-        data = pmt.PMT_NIL
+        # load data
+        data = values[ind:]
+        if len(data):
+            try:
+                data = self.data_type_mappings[self.data_type](values[ind:])
+            except Exception as e:
+                self.log.error("Unable to parse data: {}".format(e))
+                data = pmt.PMT_NIL
+        else:
+            data = pmt.PMT_NIL
 
-      return pmt.cons(dict, data)
+        return pmt.cons(dict, data)
 
     def get_line(self):
-      with self.lock:
-        # continue reading
-        line = self.fid.readline()
-        start_timer = True
-        if line:
-          pdu = self.parse_line(line)
-          if pdu:
-            self.message_port_pub(self.message_port_name,pdu)
-        else:
-          if self.repeat:
-            # move back to beginning of file
-            self.fid.seek(0)
+        with self.lock:
+            # continue reading
+            line = self.fid.readline()
+            start_timer = True
+            if line:
+                pdu = self.parse_line(line)
+                if pdu:
+                    self.message_port_pub(self.message_port_name, pdu)
+            else:
+                if self.repeat:
+                    # move back to beginning of file
+                    self.fid.seek(0)
 
-            # reload header
-            self.load_header()
-          else:
-            # no need to start timer
-            start_timer = False
+                    # reload header
+                    self.load_header()
+                else:
+                    # no need to start timer
+                    start_timer = False
 
-        if start_timer:
-          self.timer = threading.Timer(self.period / 1000., self.get_line)
-          self.timer.start()
+            if start_timer:
+                self.timer = threading.Timer(self.period / 1000., self.get_line)
+                self.timer.start()
 
     def start(self):
-      # start thread to produce data
-      if self.start_delay:
-        self.timer = threading.Timer(self.start_delay / 1000., self.get_line)
-      else:
-        self.timer = threading.Timer(self.period / 1000., self.get_line)
-      self.timer.start()
-      return True
+        # start thread to produce data
+        if self.start_delay:
+            self.timer = threading.Timer(self.start_delay / 1000., self.get_line)
+        else:
+            self.timer = threading.Timer(self.period / 1000., self.get_line)
+        self.timer.start()
+        return True
 
     def stop(self):
-      if self.timer:
-        self.timer.cancel()
+        if self.timer:
+            self.timer.cancel()
 
-      with self.lock:
-        self.fid.close()
+        with self.lock:
+            self.fid.close()
 
-      return True
+        return True
 
     def set_start_delay(self, delay):
-      self.start_delay = delay
+        self.start_delay = delay
 
     def get_start_delay(self):
-      return self.start_delay
+        return self.start_delay
 
-    def set_period(self,period):
-      self.period = period
+    def set_period(self, period):
+        self.period = period
 
     def get_period(self):
-      return self.period
+        return self.period
 
     def set_repeat(self, repeat):
-      self.repeat = repeat
+        self.repeat = repeat
 
     def get_repeat(self):
-      return self.repeat
+        return self.repeat
 
-    def set_fname(self,fname):
-      # ensure file exists
-      self.file = fname
-      if not os.path.isfile(self.file):
-        raise IOError("Invalid input file {}".format(self.file))
+    def set_fname(self, fname):
+        # ensure file exists
+        self.file = fname
+        if not os.path.isfile(self.file):
+            raise IOError("Invalid input file {}".format(self.file))
 
-      self.fid = open(self.file,'r')
-      if not self.fid:
-          raise IOError("Unable to open input file {}".format(self.file))
+        self.fid = open(self.file, 'r')
+        if not self.fid:
+            raise IOError("Unable to open input file {}".format(self.file))
 
-      # load header
-      self.load_header()
+        # load header
+        self.load_header()
 
     def get_fname(self):
-      return self.file
+        return self.file
 
     def load_header(self):
-      # parse header
-      self.header = []
-      if self.has_header:
-        try:
-          header = self.fid.readline().rstrip(',').split(',')
-          keys = [x[0].rstrip().lstrip() for x in [re.findall(r'^[^\(]*',s) for s in header]]
-          a = [re.findall(r'\((.*?)\)',s) for s in header]
+        # parse header
+        self.header = []
+        if self.has_header:
+            try:
+                header = self.fid.readline().rstrip(',').split(',')
+                keys = [x[0].rstrip().lstrip() for x in [re.findall(r'^[^\(]*', s) for s in header]]
+                a = [re.findall(r'\((.*?)\)', s) for s in header]
 
-          # default to string if unspecified
-          values = [x[0].lstrip() if len(x) else 'string' for x in [re.findall(r'\((.*?)\)',s) for s in header]]
+                # default to string if unspecified
+                values = [x[0].lstrip() if len(x) else 'string' for x in [re.findall(r'\((.*?)\)', s) for s in header]]
 
-          # set header
-          self.header = [(pmt.intern(keys[i]), self.metadata_mappings[values[i]])
-                          if keys[i] != '' else () for i in range(len(header))]
+                # set header
+                self.header = [(pmt.intern(keys[i]), self.metadata_mappings[values[i]])
+                               if keys[i] != '' else () for i in range(len(header))]
 
-        except Exception as e:
-          raise ValueError("Unable to parse header: {}".format(e))
+            except Exception as e:
+                raise ValueError("Unable to parse header: {}".format(e))

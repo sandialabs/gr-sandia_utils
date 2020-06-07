@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2018 <+YOU OR YOUR COMPANY+>.
+# Copyright 2020 gr-sandia_utils author.
 #
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,16 +22,13 @@
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
 import sandia_utils_swig as sandia_utils
-import pdu_utils
-import pmt
-import time
 
-class qa_file_sink (gr_unittest.TestCase):
+class qa_file_sink(gr_unittest.TestCase):
 
-    def setUp (self):
-        self.tb = None
+    def setUp(self):
+        self.tb = gr.top_block()
 
-    def tearDown (self):
+    def tearDown(self):
         self.tb = None
 
     def test_001_instantiation (self):
@@ -43,5 +40,6 @@ class qa_file_sink (gr_unittest.TestCase):
 
         self.assertTrue(True)
 
+
 if __name__ == '__main__':
-    gr_unittest.run(qa_file_sink, "qa_file_sink.xml")
+    gr_unittest.run(qa_file_sink)

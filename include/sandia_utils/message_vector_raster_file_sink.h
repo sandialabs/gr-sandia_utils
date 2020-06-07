@@ -1,63 +1,78 @@
 /* -*- c++ -*- */
-/* 
- * Copyright 2018 gr-sandia_utils author.
- * 
+/*
+ * Copyright 2020 gr-sandia_utils author.
+ *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3, or (at your option)
  * any later version.
- * 
+ *
  * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this software; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
 
-
 #ifndef INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_RASTER_FILE_SINK_H
 #define INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_RASTER_FILE_SINK_H
 
-#include <sandia_utils/api.h>
 #include <gnuradio/sync_block.h>
-#include<string>
+#include <sandia_utils/api.h>
+#include <string>
 
 namespace gr {
-  namespace sandia_utils {
+namespace sandia_utils {
+
+/*!
+ * \brief Save the most recent messages to a file at periodic intervals
+ * \ingroup sandia_utils
+ *
+ * The message vector raster file sink blocks processes incoming PDUs
+ * and stores a set number of uniform vectors before writing to the
+ * specified file.  Once the required number of messages has been received
+ * and the update time has elapsed, the file is generated.
+ *
+ * The file is not generated until the number of messages required is
+ * received, no matter the update rate. Only the last \p n_rows messsages
+ * are retained, so if more than \p n_rows messages are received during an
+ * update period, only the latest are saved to the file.
+ *
+ */
+class SANDIA_UTILS_API message_vector_raster_file_sink : virtual public gr::block
+{
+public:
+    typedef boost::shared_ptr<message_vector_raster_file_sink> sptr;
 
     /*!
-     * \brief <+description of block+>
-     * \ingroup sandia_utils
+     * \brief Return a shared_ptr to a new instance of
+     * sandia_utils::message_vector_raster_file_sink.
      *
+     * To avoid accidental use of raw pointers,
+     * sandia_utils::message_vector_raster_file_sink's constructor is in a private
+     * implementation class. sandia_utils::message_vector_raster_file_sink::make is the
+     * public interface for creating new instances.
      */
-    class SANDIA_UTILS_API message_vector_raster_file_sink : virtual public gr::block
-    {
-     public:
-      typedef boost::shared_ptr<message_vector_raster_file_sink> sptr;
+    static sptr make(std::string filename, int n_rows);
 
-      /*!
-       * \brief Return a shared_ptr to a new instance of sandia_utils::message_vector_raster_file_sink.
-       *
-       * To avoid accidental use of raw pointers, sandia_utils::message_vector_raster_file_sink's
-       * constructor is in a private implementation
-       * class. sandia_utils::message_vector_raster_file_sink::make is the public interface for
-       * creating new instances.
-       */
-      static sptr make(std::string filename, int n_rows);
+    /*!
+     * \brief Reset raster
+     */
+    virtual void reset() = 0;
 
-      // reset raster
-      virtual void reset() = 0;
+    /*!
+     * \brief Get the last file produced.
+     *
+     * \return File name if generated, otherwise an empty string ""
+     */
+    virtual std::string get_filename() = 0;
+};
 
-      // get the latest file produced
-      virtual std::string get_filename() = 0;
-    };
-
-  } // namespace sandia_utils
+} // namespace sandia_utils
 } // namespace gr
 
 #endif /* INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_RASTER_FILE_SINK_H */
-

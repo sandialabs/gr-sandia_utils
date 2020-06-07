@@ -43,13 +43,20 @@
 ehthumbs.db
 Thumbs.db
 
-# build files #
-######################
-build
+# test applications build directory #
+#####################################
+sdk/test_apps/bin/*
+
+
+# ignore build directory
+############################
 build/*
 
-# unit test files #
-.unittests
-.unittests/*
-*.swp
 
+# misc
+############################
+*.swp
+/.cproject
+/.project
+/.pydevproject
+/build/

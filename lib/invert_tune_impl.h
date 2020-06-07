@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2018 <+YOU OR YOUR COMPANY+>.
+ * Copyright 2020 gr-sandia_utils author.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,25 +24,28 @@
 #include <sandia_utils/invert_tune.h>
 
 namespace gr {
-  namespace sandia_utils {
+namespace sandia_utils {
 
-    class invert_tune_impl : public invert_tune
-    {
-     private:
-      uint64_t d_n_error;
-      pmt::pmt_t d_mp_name;
-      pmt::pmt_t d_freq_key;
+class invert_tune_impl : public invert_tune
+{
+private:
+    uint64_t d_n_error;
+    uint64_t d_n_exception;
+    uint64_t d_n_pdu;
+    uint64_t d_n_ops;
 
-     public:
-      invert_tune_impl();
-      ~invert_tune_impl();
-      bool stop();
+    pmt::pmt_t d_mp_name;
+    pmt::pmt_t d_freq_key;
 
-      void handle_msg(pmt::pmt_t);
+public:
+    invert_tune_impl();
+    ~invert_tune_impl();
+    bool stop();
 
-    };
+    void handle_msg(pmt::pmt_t);
+};
 
-  } // namespace sandia_utils
+} // namespace sandia_utils
 } // namespace gr
 
 #endif /* INCLUDED_SANDIA_UTILS_INVERT_TUNE_IMPL_H */

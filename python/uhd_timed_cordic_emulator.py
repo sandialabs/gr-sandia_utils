@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
-# Copyright 2018 <+YOU OR YOUR COMPANY+>.
-# 
+#
+# Copyright 2020 gr-sandia_utils author.
+#
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3, or (at your option)
 # any later version.
-# 
+#
 # This software is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this software; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-# 
+#
 
 from gnuradio import gr
 from gnuradio import blocks
 from gnuradio import filter
+import sandia_utils
 import timing_utils
 import pmt
 import numpy
@@ -31,7 +32,11 @@ DECIMATE_IN_FREQ_XLATING_FILTER = 1
 
 class uhd_timed_cordic_emulator(gr.hier_block2):
     """
-    This block allows for a broadband file to be dehopped at specific times for downstream processing.
+    UHD Timed Cordic Emulator
+
+    This block allows for a broadband file to be dehopped at specific times
+    for downstream processing by accepting the tune commands typically given to
+    SDR hardware using the UHD API.
     """
     def __init__(self, filename, loop, decimation, samp_rate, f0, short, start_time):
         gr.hier_block2.__init__(self,
@@ -39,9 +44,16 @@ class uhd_timed_cordic_emulator(gr.hier_block2):
             gr.io_signature(0, 0, 0),
             gr.io_signature(1, 1, gr.sizeof_gr_complex))
 
+        # setup logger
+        logger_name = 'gr_log.' + self.to_basic_block().alias()
+        if logger_name in gr.logger_get_names():
+          self.log = gr.logger(logger_name)
+        else:
+          self.log = gr.logger('log')
+
         # variables
         taps = filter.firdes.low_pass_2(1, samp_rate, (samp_rate*0.4)/decimation, (samp_rate*0.4)/decimation, 60)
-        print "freq xlating filter created with " + repr(len(taps)) + " taps"
+        self.log.debug("freq xlating filter created with " + repr(len(taps)) + " taps")
         fc_start = f0
 
         # message inputs / outputs
@@ -52,8 +64,7 @@ class uhd_timed_cordic_emulator(gr.hier_block2):
             self.file = blocks.file_source(gr.sizeof_short*1, filename, loop)
         else:
             self.file = blocks.file_source(gr.sizeof_gr_complex*1, filename, loop)
-        self.scale = blocks.multiply_const_vcc((1.0/pow(2,15),))
-        self.deint = blocks.interleaved_short_to_complex(False, False)
+        self.deint = sandia_utils.interleaved_short_to_complex(False, False,1.0/pow(2,15))
         self.throttle = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate,True)
         self.tagger = timing_utils.add_usrp_tags_c(fc_start, samp_rate, int(start_time), (start_time - int(start_time)))
         self.tuner = timing_utils.retune_uhd_to_timed_tag(int(samp_rate), pmt.intern('dsp_freq'), int(start_time), (start_time - int(start_time)))
@@ -69,8 +80,7 @@ class uhd_timed_cordic_emulator(gr.hier_block2):
         if short:
             self.connect(self.file, self.deint)
             self.connect(self.deint, self.throttle)
-            self.connect(self.throttle, self.scale)
-            self.connect(self.scale, self.tagger)
+            self.connect(self.throttle, self.tagger)
         else:
             self.connect(self.file, self.throttle)
             self.connect(self.throttle, self.tagger)

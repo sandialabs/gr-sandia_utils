@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2019 gr-sandia_utils author.
+# Copyright 2020 gr-sandia_utils author.
 #
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,8 +36,26 @@ class file_archiver(gr.basic_block):
   """
   File archiver.
 
-  Archives file to a specified output location with a filename of a specified
-  format that may or may not use file metadata to generate the filename.
+  Archive generated file data.  This block is intended to receive messages
+  from the file sink block indicating that a new file has been written.  To
+  allow for the file sink block to not be concerned with the generation of a
+  unique file name, the archiver can be used in conjunction with the block to
+  save files to an alternate location using a uniquely generated name.
+
+  If the filename format is unspecified, files will be directly copied to the
+  output directory.  Otherwise, metadata associated with the filename can be
+  used to generate a unique filename on output.
+
+  File names can be specified using all conversion specifications
+  supported by strftime.  Additionally, the following converation
+  specifications can be used:
+
+    %fcM      Collection center frequency in MHz
+    %fck      Collection center frequency in kHz
+    %fcc      Collection center frequency in Hz
+    %fsM      Collection sample rate in MHz
+    %fsk      Collection sample rate in kHz
+    %fsc      Collection sample rate in Hz
   """
   def __init__(self, output_path="/tmp", fname_format = "", archive = False):
     gr.basic_block.__init__(self,
@@ -46,6 +64,13 @@ class file_archiver(gr.basic_block):
         out_sig=None)
     self.message_port_register_in(pmt.intern("pdu"))
     self.set_msg_handler(pmt.intern("pdu"), self.handler)
+
+    # setup logger
+    logger_name = 'gr_log.' + self.to_basic_block().alias()
+    if logger_name in gr.logger_get_names():
+      self.log = gr.logger(logger_name)
+    else:
+      self.log = gr.logger('log')
 
     # protection mutex
     self.mutex = threading.Lock()
@@ -77,7 +102,7 @@ class file_archiver(gr.basic_block):
         self.output_path = output_path
       else:
         try:
-          print "generating output path {}".format(output_path)
+          self.log.debug("Generating output path {}".format(output_path))
           os.mkdir(output_path)
           self.output_path = output_path
         except OSError:
@@ -101,37 +126,55 @@ class file_archiver(gr.basic_block):
     return self.archive
 
   def copy_file(self,source,destination):
-    print "copying file {} to {}".format(source,destination)
+    self.log.debug("Copying file {} to {}".format(source,destination))
     # check if file already exists
     if os.path.exists(destination):
       # find last file created, by finding last extension
       files = glob.glob(destination + '.*')
       destination = destination + ('.%d' % len(files))
-      print "warning: file already exists...using {} instead".format(destination)
+      self.log.warn("File already exists...using {} instead".format(destination))
 
     # copy file
     shutil.copyfile(source,destination)
-
 
   def handler(self, msg):
     if not self.archive:
       # no need to waste any time
       return
 
-    # is pair() will pass both dictionaries and pairs
-    if not pmt.is_pair(msg):
+    if not pmt.is_dict(msg):
       return
+
+    try:
+      # this will fail if message is a PDU with non-PMT_NIL arguments
+      n = pmt.length(pmt.dict_items(msg))
+
+      # a PDU with one element equal to PMT_NIL still looks like a
+      # dictionary...grrrrr!
+      if (n == 1) and (pmt.equal(pmt.car(msg),pmt.PMT_NIL) or \
+                       pmt.equal(pmt.cdr(msg),pmt.PMT_NIL)):
+        # treat as a pdu
+        meta = pmt.car(msg)
+      else:
+        # it's a dictionary
+        meta = msg
+    except:
+      try:
+        # message is a pdu
+        pmt.length(pmt.dict_items(pmt.car(msg)))
+        meta = pmt.car(msg)
+      except:
+        return
 
     # extract file components
     try:
-      meta = pmt.car(msg)
       fname = pmt.dict_ref(meta,self.filename_tag,pmt.PMT_NIL)
       file_time = pmt.dict_ref(meta,self.time_tag,pmt.PMT_NIL)
       freq = pmt.dict_ref(meta,self.freq_tag,pmt.PMT_NIL)
       rate = pmt.dict_ref(meta,self.rate_tag,pmt.PMT_NIL)
 
       if pmt.equal(fname,pmt.PMT_NIL):
-        print("no file specified")
+        self.log.warn("No file specified")
         return
 
       f = pmt.symbol_to_string(fname)
@@ -161,5 +204,4 @@ class file_archiver(gr.basic_block):
         # archive file
         self.copy_file(f, os.path.join(self.output_path,base_fname))
     except Exception as e:
-      print "Error: {}".format(e)
-      pass
+      self.log.error("Unable to process message:{}".format(e))

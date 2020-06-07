@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2019 gr-sandia_utils author.
+# Copyright 2020 gr-sandia_utils author.
 #
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,14 @@
 # Boston, MA 02110-1301, USA.
 #
 
+
 import numpy
 import pmt
 import re
+import copy
+import math
 from gnuradio import gr
+
 
 class csv_writer(gr.sync_block):
     """
@@ -42,6 +46,8 @@ class csv_writer(gr.sync_block):
     to the file.
 
     The metadata type is specified within parentheses after each metadata field.
+    The string specification for the printing of the metadata can be specified
+    using the 'field:spec' format.
 
     The input message must be a pair (PDU), with the metadata being the first
     element and a uniform vector the second element.
@@ -57,6 +63,7 @@ class csv_writer(gr.sync_block):
       * double
       * complex
       * time (car = uint64, cdr = double)
+      * time_tuple(0 - uint64, 1 - double)
 
     Supported data types:
       * uint8
@@ -90,18 +97,26 @@ class csv_writer(gr.sync_block):
       field0(string),field1(bool),field2(float)
       A,True,30.72e6,65,66,67,68,69,70
     """
-    def __init__(self,fname='',add_metadata = False, metadata_format='',data_type='uint8',
+
+    def __init__(self, fname='', add_metadata=False, metadata_format='', data_type='uint8',
                  precision=0):
         gr.sync_block.__init__(self,
-            name="csv_writer",
-            in_sig=None,
-            out_sig=None)
+                               name="csv_writer",
+                               in_sig=None,
+                               out_sig=None)
         self.fname = fname
         self.add_metadata = add_metadata
         self.metadata_format = metadata_format
         self.data_type = data_type
         self.precision = precision
         self.fid = None
+
+        # setup logger
+        logger_name = 'gr_log.' + self.to_basic_block().alias()
+        if logger_name in gr.logger_get_names():
+            self.log = gr.logger(logger_name)
+        else:
+            self.log = gr.logger('log')
 
         # metadata field mappings
         self.metadata_mappings = {'string': lambda x: pmt.symbol_to_string(x),
@@ -111,7 +126,10 @@ class csv_writer(gr.sync_block):
                                   'float': lambda x: pmt.to_float(x),
                                   'double': lambda x: pmt.to_double(x),
                                   'complex': lambda x: pmt.to_complex(x),
-                                  'time': lambda x: float(pmt.to_uint64(pmt.car(x))) + pmt.to_double(pmt.cdr(x))
+                                  'time': lambda x: float(pmt.to_uint64(pmt.car(x)))
+                                  + pmt.to_double(pmt.cdr(x)),
+                                  'time_tuple': lambda x: float(pmt.to_uint64(pmt.tuple_ref(x, 0)))
+                                  + pmt.to_double(pmt.tuple_ref(x, 1))
                                   }
 
         # data type parsers
@@ -129,126 +147,144 @@ class csv_writer(gr.sync_block):
 
         # check data type
         if data_type not in self.data_type_mappings.keys():
-          raise ValueError('Invalid data type')
+            raise ValueError('Invalid data type')
 
         self.find_metadata = False
         self.header = []
         if self.add_metadata:
-          if self.metadata_format == '':
-            # set flag to load metadata on first message received
-            self.find_metadata = True
-          else:
-            self.parse_header_format()
+            if self.metadata_format == '':
+                # set flag to load metadata on first message received
+                self.find_metadata = True
+            else:
+                self.parse_header_format()
 
         # register message handler
         self.message_port_name = pmt.intern('in')
         self.message_port_register_in(self.message_port_name)
-        self.set_msg_handler(self.message_port_name,self.message_handler)
+        self.set_msg_handler(self.message_port_name, self.message_handler)
 
-    def message_handler(self,msg):
-      if not pmt.is_dict(msg):
-        return
+    def message_handler(self, msg):
+        if not pmt.is_dict(msg):
+            return
 
-      try:
-        # this will fail if message is a PDU with non-PMT_NIL arguments
-        n = pmt.length(pmt.dict_items(msg))
-
-        # a PDU with one element equal to PMT_NIL still looks like a
-        # dictionary...grrrrr!
-        if (n == 1) and (pmt.equal(pmt.car(msg),pmt.PMT_NIL) or \
-                         pmt.equal(pmt.cdr(msg),pmt.PMT_NIL)):
-          # treat as a pdu
-          car = pmt.car(msg)
-          cdr = pmt.cdr(msg)
-        else:
-          car = msg
-          cdr = pmt.init_u8vector(0,[])
-      except:
         try:
-          # message is a pdu
-          pmt.length(pmt.dict_items(pmt.car(msg)))
-          car = pmt.car(msg)
-          cdr = pmt.cdr(msg)
+            # this will fail if message is a PDU with non-PMT_NIL arguments
+            n = pmt.length(pmt.dict_items(msg))
+
+            # a PDU with one element equal to PMT_NIL still looks like a
+            # dictionary...grrrrr!
+            if (n == 1) and (pmt.equal(pmt.car(msg), pmt.PMT_NIL) or
+                             pmt.equal(pmt.cdr(msg), pmt.PMT_NIL)):
+                # treat as a pdu
+                car = pmt.car(msg)
+                cdr = pmt.cdr(msg)
+            else:
+                car = msg
+                cdr = pmt.init_u8vector(0, [])
         except:
-          return
+            try:
+                # message is a pdu
+                pmt.length(pmt.dict_items(pmt.car(msg)))
+                car = pmt.car(msg)
+                cdr = pmt.cdr(msg)
+            except:
+                return
 
-      if self.find_metadata:
-        keys = pmt.dict_keys(car)
-        self.header = [(pmt.nth(i,keys), pmt.symbol_to_string) for i in range(pmt.length(keys))]
+        if self.find_metadata:
+            keys = pmt.dict_keys(car)
+            self.header = [(pmt.nth(i, keys), pmt.symbol_to_string) for i in range(pmt.length(keys))]
 
-        header = ','.join([pmt.symbol_to_string(pmt.nth(i,keys)) for i in range(pmt.length(keys))])
+            header = ','.join([pmt.symbol_to_string(pmt.nth(i, keys)) for i in range(pmt.length(keys))])
+            if self.fid:
+                self.fid.write(header + '\n')
+
+        # ensure we no longer search for metadata
+        self.find_metadata = False
+
         if self.fid:
-          self.fid.write(header + '\n')
+            # add metadata
+            if self.add_metadata:
+                self.print_metadata(car)
 
-      # ensure we no longer search for metadata
-      self.find_metadata = False
+            # cdr must be a uniform vector type
+            if not pmt.is_uniform_vector(cdr):
+                self.fid.write('\n')
+                return
 
-      if self.fid:
-        # add metadata
-        if self.add_metadata:
-          self.print_metadata(car)
-
-        # cdr must be a uniform vector type
-        if not pmt.is_uniform_vector(cdr):
-          self.fid.write('\n')
-          return
-
-        # add data
-        values = self.data_type_mappings[self.data_type](cdr)
-        if (self.precision > 0) and (self.data_type in ['float','double','complex float','complex double']):
-          self.fid.write(','.join(['{:.{n}f}'.format(i,n=self.precision) for i in values]))
-        else:
-          self.fid.write(','.join([str(i) for i in values]))
-          self.fid.write('\n')
+            # add data
+            values = self.data_type_mappings[self.data_type](cdr)
+            if (self.precision > 0) and (self.data_type in ['float', 'double', 'complex float', 'complex double']):
+                self.fid.write(','.join(['{:.{n}f}'.format(i, n=self.precision) for i in values]))
+            else:
+                self.fid.write(','.join([str(i) for i in values]))
+                self.fid.write('\n')
 
     def start(self):
-      try:
-        self.fid = open(self.fname,'w')
-      except Exception as e:
-        raise IOError("Unable to open output file {}".format(self.fname))
+        try:
+            self.fid = open(self.fname, 'w')
+        except Exception as e:
+            raise IOError("Unable to open output file {}".format(self.fname))
 
-      # add header if specified
-      if self.add_metadata and not self.find_metadata:
-        self.fid.write(self.metadata_format)
-        self.fid.write('\n')
-      return True
+        # add header if specified
+        if self.add_metadata and not self.find_metadata:
+            self.fid.write(self.metadata_format)
+            self.fid.write('\n')
+        return True
 
     def stop(self):
-      if self.fid:
-        self.fid.close()
+        if self.fid:
+            self.fid.close()
 
-      return True
+        return True
 
     def print_metadata(self, car):
-      values = []
-      for key,func in self.header:
-        value = pmt.dict_ref(car,key,pmt.PMT_NIL)
-        try:
-          if pmt.equal(value,pmt.PMT_NIL):
-            values.append('')
-          else:
-            values.append(str(func(value)))
-        except:
-          values.append(pmt.write_string(value))
+        values = []
+        for key, func in self.header:
+            value = pmt.dict_ref(car, key, pmt.PMT_NIL)
+            try:
+                if pmt.equal(value, pmt.PMT_NIL):
+                    values.append('')
+                else:
+                    values.append(func(value))
+            except:
+                values.append(pmt.write_string(value))
 
-      # write to file
-      self.fid.write(','.join(values))
-      if len(values):
-        # add trailing comma if metadata is present
-        self.fid.write(',')
+        # write to file
+        self.fid.write(','.join(values))
+        if len(values):
+            # add trailing comma if metadata is present
+            self.fid.write(',')
 
     def parse_header_format(self):
-      # parse header
-      try:
-        header =  self.metadata_format.split(',')
-        keys = [x[0].rstrip().lstrip() for x in [re.findall(r'^[^\(]*',s) for s in header]]
-        a = [re.findall(r'\((.*?)\)',s) for s in header]
+        # parse header
+        try:
+            header = self.metadata_format.split(',')
+            keys = [x[0].rstrip().lstrip() for x in [re.findall(r'^[^\(]*', s) for s in header]]
+            a = [re.findall(r'\((.*?)\)', s) for s in header]
 
-        # default to string if unspecified
-        values = [x[0].lstrip() if len(x) else 'string' for x in [re.findall(r'\((.*?)\)',s) for s in header]]
+            # default to string if unspecified - use specification string if given
+            fields = [x[0].lstrip() if len(x) else 'string' for x in [re.findall(r'\((.*?)\)', s) for s in header]]
 
-        # set header
-        self.header = [(pmt.intern(keys[i]), self.metadata_mappings[values[i]])
-                        if keys[i] != '' else () for i in range(len(header))]
-      except Exception as e:
-        raise ValueError("Unable to parse header format: {}".format(e))
+            # set header
+            self.header = []
+            stripped_fields = []
+            for i in range(len(fields)):
+                # load spec string if not specified
+                values = fields[i].split(':')
+                stripped_fields.append(values[0])
+                if values[0] in self.metadata_mappings:
+                    # basic print function
+                    print_func = lambda x, values=values: str(self.metadata_mappings[values[0]](x))
+
+                    if len(values) == 2:
+                        spec = '{:' + values[1] + '}'
+                        print_func = lambda x, spec=spec, values=values: spec.format(self.metadata_mappings[values[0]](x))
+
+                    # add print function
+                    self.header.append((pmt.intern(keys[i]), print_func))
+
+            # update metadata format so it can be properly written to file
+            self.metadata_format = ",".join([keys[i] + '(' + stripped_fields[i] + ')' for i in range(len(keys))])
+
+        except Exception as e:
+            raise ValueError("Unable to parse header format: {}".format(e))
