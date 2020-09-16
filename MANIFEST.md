@@ -1,16 +1,17 @@
 title: The SANDIA_UTILS OOT Module
-brief: Short description of gr-sandia_utils
-tags: # Tags are arbitrary, but look at CGRAN what other authors are using
-  - sdr
+brief: Assorted blocks that do not fit well into the other *utils modules.
+tags:
+  - File
 author:
-  - Author Name <authors@email.address>
+  - Sandia National Laboratories
+  - Jacob Gilbert
+  - Peter Knee
+  - Sam Whiting
 copyright_owner:
-  - Copyright Owner 1
+  - NTESS, LLC
 license:
-#repo: # Put the URL of the repository here, or leave blank for default
-#website: <module_website> # If you have a separate project website, put it here
-#icon: <icon_url> # Put a URL to a square image here that will be used as an icon on CGRAN
+gr_supported_version: v3.7, v3.8
+#repo: https://github.com/sandialabs/gr-sandia_utils
+#icon: https://github.com/sandialabs/gr-sandia_utils/docs/sandia.png
 ---
-A longer, multi-line description of gr-sandia_utils.
-You may use some *basic* Markdown here.
-If left empty, it will try to find a README file instead.
+
