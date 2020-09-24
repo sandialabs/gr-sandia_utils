@@ -20,8 +20,10 @@
 #include "sandia_utils/message_vector_raster_file_sink.h"
 #include "sandia_utils/stream_gate.h"
 #include "sandia_utils/tag_debug_file.h"
+#include "sandia_utils/sandia_tag_debug.h"
 #include "sandia_utils/tagged_bits_to_bytes.h"
 #include "sandia_utils/compute_stats.h"
+#include "sandia_utils/vita49_tcp_msg_source.h"
 %}
 
 %include "sandia_utils/constants.h"
@@ -47,6 +49,8 @@ GR_SWIG_BLOCK_MAGIC2(sandia_utils, message_vector_file_sink);
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, message_vector_raster_file_sink);
 %include "sandia_utils/tag_debug_file.h"
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, tag_debug_file);
+%include "sandia_utils/sandia_tag_debug.h"
+GR_SWIG_BLOCK_MAGIC2(sandia_utils, sandia_tag_debug);
 %include "sandia_utils/tagged_bits_to_bytes.h"
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, tagged_bits_to_bytes);
 
@@ -59,3 +63,5 @@ GR_SWIG_BLOCK_MAGIC2_TMPL(sandia_utils, stream_gate_f, stream_gate<float>);
 GR_SWIG_BLOCK_MAGIC2_TMPL(sandia_utils, stream_gate_c, stream_gate<gr_complex>);
 %include "sandia_utils/compute_stats.h"
 GR_SWIG_BLOCK_MAGIC2(sandia_utils, compute_stats);
+%include "sandia_utils/vita49_tcp_msg_source.h"
+GR_SWIG_BLOCK_MAGIC2(sandia_utils, vita49_tcp_msg_source);

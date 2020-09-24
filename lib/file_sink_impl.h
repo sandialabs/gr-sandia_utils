@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2020 gr-sandia_utils author.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifndef INCLUDED_SANDIA_UTILS_FILE_SINK_IMPL_H
@@ -71,6 +60,8 @@ private:
     // message stream file object
     std::ofstream d_msg_file;
 
+    bool d_debug;
+
 public:
     /**
      * Constructor
@@ -83,6 +74,7 @@ public:
      * @param rate - Sampling rate (Hz)
      * @param out_dir - Base output directory
      * @param name_spec - Name specification format string
+     * @param debug - turn on debug functionality
      */
     file_sink_impl(std::string type,
                    size_t itemsize,
@@ -91,7 +83,8 @@ public:
                    uint64_t nsamples,
                    int rate,
                    std::string out_dir,
-                   std::string name_spec);
+                   std::string name_spec,
+                   bool debug = false);
 
     /**
      * Deconstructor
@@ -106,6 +99,11 @@ public:
              gr_vector_void_star& output_items);
 
     /**
+     * Lifecycle start method
+     */
+    virtual bool start();
+
+    /**
      * Lifecycle stop method
      *
      */
@@ -117,7 +115,7 @@ public:
         // publish update
         pmt::pmt_t dict = pmt::dict_add(pmt::make_dict(), FNAME_KEY, pmt::intern(fname));
         dict = pmt::dict_add(dict,
-                             TIME_KEY,
+                             RX_TIME_KEY,
                              pmt::make_tuple(pmt::from_uint64(file_time.epoch_sec()),
                                              pmt::from_double(file_time.epoch_frac())));
         dict = pmt::dict_add(dict, FREQ_KEY, pmt::from_double(freq));

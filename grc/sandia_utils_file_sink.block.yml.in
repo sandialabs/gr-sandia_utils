@@ -13,8 +13,8 @@ parameters:
     option_attributes:
         size: [gr.sizeof_gr_complex, 2*gr.sizeof_short, gr.sizeof_float, gr.sizeof_int,
             gr.sizeof_short, gr.sizeof_char, gr.sizeof_char]
-      #  str: ['"complex"', '"complex_int"', '"float"', '"int"', '"short"', '"byte"',
-      #      '"message"']
+        str: ["'complex'","'complex_int'","'float'","'int'",
+            "'short'","'byte'","'message'"]
     hide: part
 -   id: vlen
     label: Vec Length
@@ -36,11 +36,11 @@ parameters:
     hide: ${ ('none' if type == 'message' else 'part') }
 -   id: file_type
     label: File Type
-    dtype: enum
+    dtype: string
     default: raw
-    options: [raw, raw_header]
-    option_labels: [Raw IQ, Raw IQ + Header]
-    hide: ${ ('all' if type == 'message' else 'none') }
+    options: [raw, raw_header@HAVE_BLU_GRC_OPTION@ ]
+    option_labels: [Raw IQ, Raw IQ + Header@HAVE_BLU_GRC_LABEL@ ]
+    hide: part
 -   id: rate
     label: Sampling Rate
     dtype: int
@@ -84,18 +84,28 @@ parameters:
     default: 'True'
     options: ['True', 'False']
     hide: ${ ('all' if type == 'message' else 'none') }
+-   id: debug
+    label: Debug
+    dtype: enum
+    default: 'False'
+    options: ['True', 'False']
+    option_labels: [Enabled, Disabled]
+    option_attributes:
+        hide: ['False', 'True']
+    hide: part
 
 inputs:
 -   domain: stream
     dtype: ${ type }
     vlen: ${ vlen }
-    multiplicity: ${ (0 if type == 'message' else nchan) }
+    multiplicity: ${ (0 if type == 'message' else 1) }
     optional: true
 
 outputs:
 -   domain: message
     id: pdu
     optional: true
+
 asserts:
 - ${ vlen > 0 }
 - ${ nsamples > -1 }
@@ -103,19 +113,23 @@ asserts:
 
 templates:
     imports: import sandia_utils
-    make: |-
+    make: |+
         sandia_utils.file_sink(${type.str}, ${type.size}*${vlen}, ${file_type},
-          ${mode}, ${nsamples}, ${rate}, ${directory}, ${name_spec})
+          ${mode}, ${nsamples}, ${rate}, ${directory}, ${name_spec}, ${debug})
 
         self.${id}.set_recording(${record})
         self.${id}.set_gen_new_folder(${create_new_dir})
         self.${id}.set_second_align(${align})
         self.${id}.set_file_num_rollover(${file_num_rollover})
+
+
     callbacks:
     - set_mode(${mode})
     - set_recording(${record})
     - set_nsamples(${nsamples})
     - set_second_align(${align})
     - set_file_num_rollover(${file_num_rollover})
+
+
 
 file_format: 1

@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2019 gr-sandia_utils author.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifdef HAVE_CONFIG_H
@@ -163,15 +152,12 @@ int block_buffer_impl::general_work(int noutput_items,
             d_buf[d_reading].abs_read_idx = nitems_read(0) + in_idx;
             d_buf[d_reading].tags.clear();
             d_buf[d_reading].rx_time = pmt::PMT_NIL;
-            // printf("reading into new buffer %d, abs offset is %lu\n", d_reading,
-            // d_buf[d_reading].abs_read_idx);
         }
 
         // read as much as we can into the current buffer
         size_t to_read =
             std::min((size_t)(ninput_items[0] - in_idx), d_nsamples - d_read_idx);
-        // printf("reading %lu items starting at %d into buffer %d\n", to_read, in_idx,
-        // d_reading);
+
 
         // update current rate
         std::vector<tag_t> rate_tags;
@@ -243,16 +229,26 @@ int block_buffer_impl::general_work(int noutput_items,
                 // reset to pont of last tag
                 d_read_idx = 0;
                 in_idx = tags.back().offset - nitems_read(0);
-                printf("bad tags... starting buffer %d over at %d\n", d_reading, in_idx);
-                printf("the size of overflow_tags is %ld\n", overflow_tags.size());
+                GR_LOG_DEBUG(d_logger,
+                             boost::format("bad tags... starting buffer %d over at %d") %
+                                 d_reading % in_idx);
+                GR_LOG_DEBUG(d_logger,
+                             boost::format("the size of overflow_tags is %ld") %
+                                 overflow_tags.size());
                 if (overflow_tags.size()) {
-                    printf("the overflow tags value is %d \n",
-                           pmt::to_bool(overflow_tags[0].value));
+                    GR_LOG_DEBUG(d_logger,
+                                 boost::format("the overflow tags value is %d") %
+                                     pmt::to_bool(overflow_tags[0].value));
                 }
-                printf("the size of tags is %ld\n", tags.size());
-                printf("the abs_read index is %ld \n", d_buf[d_reading].abs_read_idx);
+                GR_LOG_DEBUG(d_logger,
+                             boost::format("the size of tags is %ld") % tags.size());
+                GR_LOG_DEBUG(d_logger,
+                             boost::format("the abs_read index is %ld") %
+                                 d_buf[d_reading].abs_read_idx);
                 if (tags.size()) {
-                    printf("the tags[0] offset is %ld \n", tags[0].offset);
+                    GR_LOG_DEBUG(d_logger,
+                                 boost::format("the tags[0] offset is %ld") %
+                                     tags[0].offset);
                 }
                 continue;
             }
@@ -277,13 +273,10 @@ int block_buffer_impl::general_work(int noutput_items,
             d_read_idx = 0;
             d_latest = d_reading;
             d_reading = 3 - d_writing - d_latest;
-            // printf("reading buffer is full, switching to buffer %d\n", d_reading);
             if (d_latest_valid == false) {
                 // jump start the writing buffer if it has been waiting
                 d_write_idx = 0;
                 d_writing = d_latest;
-                // printf("buffer now available, setting write buffer to %d\n",
-                // d_writing);
             }
             d_latest_valid = true;
         }
@@ -296,7 +289,6 @@ int block_buffer_impl::general_work(int noutput_items,
 
         // if at the beginning of a buffer, copy all tags onto the output stream
         if (d_write_idx == 0) {
-            // printf("writing from new buffer (%d), copying tags\n", d_writing);
             d_buf[d_writing].abs_write_idx = nitems_written(0) + out_idx;
 
             uint64_t offset =
@@ -304,8 +296,6 @@ int block_buffer_impl::general_work(int noutput_items,
             for (tag_t& tag : d_buf[d_writing].tags) {
                 tag.offset -= offset;
                 add_item_tag(0, tag);
-                // printf("added tag '%s' to offset %lu\n",
-                // pmt::symbol_to_string(tag.key).c_str(), tag.offset);
             }
 
             // pop from the d_rx_time_tags queue until d_current_rx_time_tag has the last
@@ -348,9 +338,6 @@ int block_buffer_impl::general_work(int noutput_items,
                              d_buf[d_writing].abs_write_idx,
                              PMT_RX_TIME,
                              d_buf[d_writing].rx_time);
-                // printf("passing estimated time %f at offset %lu (based on rx_time
-                // %f)\n", seconds+frac_seconds, d_buf[d_writing].abs_read_idx,
-                // convert_rx_time(d_current_rx_time_tag));
             }
 
             // also insert a start of block tag
@@ -364,8 +351,6 @@ int block_buffer_impl::general_work(int noutput_items,
         // write as much as we can from the current buffer
         size_t to_write = std::min((size_t)(noutput_items - d_nreserved - out_idx),
                                    d_nsamples - d_write_idx);
-        // printf("writing %lu items starting at %d from buffer %d\n", to_write, out_idx,
-        // d_writing);
 
         // write from buffer
         char* dst = static_cast<char*>(output_items[0]) + d_itemsize * out_idx;
@@ -381,12 +366,9 @@ int block_buffer_impl::general_work(int noutput_items,
             if (d_latest == d_writing) {
                 // no new buffer available
                 d_latest_valid = false;
-                // printf("writing buffer %d is empty, no new buffers available\n",
-                // d_writing);
+
             } else {
                 // switch to latest filled buffer
-                // printf("writing buffer %d is empty, switching to buffer %d\n",
-                // d_writing, d_latest);
                 d_write_idx = 0;
                 d_writing = d_latest;
             }

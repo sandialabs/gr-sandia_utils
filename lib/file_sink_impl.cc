@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2020 gr-sandia_utils author.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,10 +26,11 @@ file_sink::sptr file_sink::make(std::string type,
                                 uint64_t nsamples,
                                 int rate,
                                 std::string out_dir,
-                                std::string name_spec)
+                                std::string name_spec,
+                                bool debug)
 {
     return gnuradio::get_initial_sptr(new file_sink_impl(
-        type, itemsize, file_type, mode, nsamples, rate, out_dir, name_spec));
+        type, itemsize, file_type, mode, nsamples, rate, out_dir, name_spec, debug));
 }
 
 /*
@@ -53,7 +43,8 @@ file_sink_impl::file_sink_impl(std::string data_type,
                                uint64_t nsamples,
                                int rate,
                                std::string out_dir,
-                               std::string name_spec)
+                               std::string name_spec,
+                               bool debug)
     : gr::sync_block("file_sink",
                      gr::io_signature::make(data_type == "message" ? 0 : 1,
                                             data_type == "message" ? 0 : 1,
@@ -64,7 +55,8 @@ file_sink_impl::file_sink_impl(std::string data_type,
       d_mode(mode),
       d_nsamples(nsamples),
       d_out_dir(out_dir),
-      d_name_spec(name_spec)
+      d_name_spec(name_spec),
+      d_debug(debug)
 {
     // set initial local values
     d_recording = false;
@@ -81,16 +73,7 @@ file_sink_impl::file_sink_impl(std::string data_type,
         message_port_register_in(IN_KEY);
         set_msg_handler(IN_KEY, boost::bind(&file_sink_impl::handle_msg, this, _1));
 
-        // open output file
-        fs::path temp_dir = fs::path(d_out_dir);
-        if (not fs::is_directory(temp_dir)) {
-            throw std::runtime_error("Invalid output path");
-        }
-        fs::path outfile = temp_dir / d_name_spec;
-        d_msg_file.open(outfile.string().c_str(), std::ifstream::binary);
-        if (!d_msg_file.is_open()) {
-            GR_LOG_WARN(d_logger, "d_msg_file: " + outfile.string() + " isn't open");
-        }
+        // Note: file is opened in start()
     } else {
         // initialize writer
         d_file_writer = file_writer_base::make(
@@ -241,8 +224,6 @@ void file_sink_impl::handle_msg(pmt::pmt_t msg)
     std::string str = pmt::serialize_str(msg);
     uint32_t len = (uint32_t)str.length();
 
-    // GR_LOG_DEBUG( d_logger, boost::format("Msg Write %d") % len );
-
     // write to file
     d_msg_file.write((char*)&len, sizeof(uint32_t));
     d_msg_file.write(str.c_str(), str.length());
@@ -275,8 +256,7 @@ int file_sink_impl::work(int noutput_items,
         ntoconsume = do_handle_tags(tags, start, do_stop, noutput_items);
     }
 
-    // how many items should we actually process now that we have aligned
-    // the tags?
+    // number of items to process
     int nprocessed = ntoconsume;
 
     // manual recording mode
@@ -293,12 +273,14 @@ int file_sink_impl::work(int noutput_items,
                     // why!
                     d_ndiscard = (int)std::ceil((double)d_file_writer->get_rate() *
                                                 (1.0 - d_samp_time.epoch_frac()));
-                    GR_LOG_DEBUG(
-                        d_logger,
-                        boost::format(
-                            "epoch_sec = %ld, epoch_frac = %0.6e, ndiscard = %d") %
-                            d_samp_time.epoch_sec() % d_samp_time.epoch_frac() %
-                            d_ndiscard);
+                    if (d_debug) {
+                        GR_LOG_DEBUG(
+                            d_logger,
+                            boost::format(
+                                "epoch_sec = %ld, epoch_frac = %0.6e, ndiscard = %d") %
+                                d_samp_time.epoch_sec() % d_samp_time.epoch_frac() %
+                                d_ndiscard);
+                    }
                 }
 
                 d_check_start = false;
@@ -314,10 +296,12 @@ int file_sink_impl::work(int noutput_items,
             } else {
                 if (d_issue_start) {
                     // start file writer if it has been closed
-                    GR_LOG_DEBUG(
-                        d_logger,
-                        boost::format("starting writer: sec = %ld, frac = %0.6e") %
-                            d_samp_time.epoch_sec() % d_samp_time.epoch_frac());
+                    if (d_debug) {
+                        GR_LOG_DEBUG(
+                            d_logger,
+                            boost::format("starting writer: sec = %ld, frac = %0.6e") %
+                                d_samp_time.epoch_sec() % d_samp_time.epoch_frac());
+                    }
                     d_file_writer->start(d_samp_time);
                     d_issue_start = false;
                 }
@@ -351,10 +335,12 @@ int file_sink_impl::work(int noutput_items,
         } else {
             // issue start if necessary
             if (d_issue_start) {
-                GR_LOG_DEBUG(
-                    d_logger,
-                    boost::format("starting burst writer: sec = %ld, frac = %0.6e\n") %
-                        d_samp_time.epoch_sec() % d_samp_time.epoch_frac());
+                if (d_debug) {
+                    GR_LOG_DEBUG(d_logger,
+                                 boost::format(
+                                     "starting burst writer: sec = %ld, frac = %0.6e\n") %
+                                     d_samp_time.epoch_sec() % d_samp_time.epoch_frac());
+                }
                 d_file_writer->start(d_samp_time);
                 d_issue_start = false;
             }
@@ -390,6 +376,24 @@ int file_sink_impl::work(int noutput_items,
 }
 
 /**
+ * Lifecycle start method
+ */
+bool file_sink_impl::start()
+{
+    if (d_type == "message") {
+        // open output file
+        fs::path temp_dir = fs::path(d_out_dir);
+        if (not fs::is_directory(temp_dir)) {
+            throw std::runtime_error("Invalid output path");
+        }
+        fs::path outfile = temp_dir / d_name_spec;
+        d_msg_file.open(outfile.string().c_str(), std::ifstream::binary);
+    }
+
+    return true;
+} // end start
+
+/**
  * Lifecycle stop method
  *
  */
@@ -397,7 +401,6 @@ bool file_sink_impl::stop()
 {
     if (d_type != "message") {
         // ensure file writer stops
-
         d_file_writer->stop();
     } else {
         if (d_msg_file.bad()) {
@@ -426,11 +429,16 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
     uint64_t change_offset = starting_offset + noutput_items;
     bool config_changed = false;
 
-    GR_LOG_DEBUG(d_logger, boost::format("Starting tag offset: %ld") % (starting_offset));
-    for (size_t tag_num = 0; tag_num < tags.size(); ++tag_num) {
+    if (d_debug) {
         GR_LOG_DEBUG(d_logger,
-                     boost::format("File Sink Tag %ld: key %s, offset %ld") % tag_num %
-                         tags[tag_num].key % tags[tag_num].offset);
+                     boost::format("Starting tag offset: %ld") % (starting_offset));
+    }
+    for (size_t tag_num = 0; tag_num < tags.size(); ++tag_num) {
+        if (d_debug) {
+            GR_LOG_DEBUG(d_logger,
+                         boost::format("File Sink Tag %ld: key %s, offset %ld") %
+                             tag_num % tags[tag_num].key % tags[tag_num].offset);
+        }
 
         // ensure tags that don't affect stream are processed first
         if (pmt::equal(tags[tag_num].key, RATE_KEY)) {
@@ -453,7 +461,7 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
 
             config_changed = true;
             change_offset = tags[tag_num].offset;
-        } else if (pmt::equal(tags[tag_num].key, TIME_KEY)) {
+        } else if (pmt::equal(tags[tag_num].key, RX_TIME_KEY)) {
             pmt::pmt_t time_tuple = tags[tag_num].value;
             if (pmt::is_tuple(time_tuple)) {
                 d_samp_time.set(pmt::to_uint64(pmt::tuple_ref(time_tuple, 0)),
@@ -470,13 +478,16 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
         }
     } /* end for tags */
 
+
     // The command to start the writer is only issue when the observed tags
     // indicate a configuration change, and the last observed offset for a
     // configuration change is the same as the starting offset
-    GR_LOG_DEBUG(
-        d_logger,
-        boost::format("config changed %d, change offset %ld, writer started %d") %
-            config_changed % change_offset % d_file_writer->is_started());
+    if (d_debug) {
+        GR_LOG_DEBUG(
+            d_logger,
+            boost::format("config changed %d, change offset %ld, writer started %d") %
+                config_changed % change_offset % d_file_writer->is_started());
+    }
     if (config_changed) {
         if ((change_offset == starting_offset) and not d_file_writer->is_started()) {
             GR_LOG_DEBUG(d_logger, "issuing start command");
@@ -506,8 +517,10 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
     // the number of items that can be consumed is equal to the offset of the
     // last configuration change tag, which defaults to the last sample so that
     // all are consumed if no configuration changes are observed
-    GR_LOG_DEBUG(d_logger,
-                 boost::format("Number of samples to consume: %ld") % (ntoconsume));
+    if (d_debug) {
+        GR_LOG_DEBUG(d_logger,
+                     boost::format("Number of samples to consume: %ld") % (ntoconsume));
+    }
     return ntoconsume;
 }
 

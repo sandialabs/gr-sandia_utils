@@ -1,0 +1,65 @@
+id: sandia_utils_tag_debug
+label: Tag Debug++
+category: '[Sandia]/Sandia Utilities'
+
+parameters:
+-   id: type
+    label: Input Type
+    dtype: enum
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_int, gr.sizeof_short,
+            gr.sizeof_char]
+    hide: part
+-   id: name
+    label: Name
+    dtype: string
+-   id: filter
+    label: Key Filter
+    dtype: string
+    default: '""'
+-   id: num_inputs
+    label: Num Inputs
+    dtype: int
+    default: '1'
+    hide: part
+-   id: vlen
+    label: Vec Length
+    dtype: int
+    default: '1'
+    hide: ${ 'part' if vlen == 1 else 'none' }
+-   id: display
+    label: Display
+    dtype: bool
+    default: 'True'
+    options: ['True', 'False']
+    option_labels: ['On', 'Off']
+-   id: store
+    label: Store All
+    dtype: bool
+    hide: part
+    default: 'True'
+    options: ['True', 'False']
+    option_labels: ['On', 'Off']
+
+inputs:
+-   domain: stream
+    dtype: ${ type }
+    vlen: ${ vlen }
+    multiplicity: ${ num_inputs }
+
+asserts:
+- ${ num_inputs >= 1 }
+- ${ vlen > 0 }
+
+templates:
+    imports: import sandia_utils
+    make: |-
+        sandia_utils.sandia_tag_debug(${type.size}*${vlen}, ${name}, ${filter}, ${store})
+        self.${id}.set_display(${display})
+    callbacks:
+    - set_display(${display})
+
+
+
+file_format: 1

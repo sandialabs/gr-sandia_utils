@@ -13,6 +13,8 @@
 # Temp VI files #
 #################
 *~
+*.swp
+*.bak
 
 # Packages #
 ############
@@ -43,20 +45,16 @@
 ehthumbs.db
 Thumbs.db
 
-# test applications build directory #
-#####################################
-sdk/test_apps/bin/*
-
-
-# ignore build directory
-############################
+# build files #
+###############
+build
 build/*
 
+# unit test files #
+###################
+.unittests
+.unittests/*
 
-# misc
-############################
-*.swp
 /.cproject
 /.project
 /.pydevproject
-/build/

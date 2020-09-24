@@ -1,17 +1,18 @@
-title: The SANDIA_UTILS OOT Module
-brief: Assorted blocks that do not fit well into the other *utils modules.
+title: The Sandia Utilities OOT Module
+brief: A collection of assorted GR functions and extended in-tree blocks
 tags:
-  - File
+  - misc
 author:
   - Sandia National Laboratories
   - Jacob Gilbert
   - Peter Knee
   - Sam Whiting
+  - Brian Adams
 copyright_owner:
   - NTESS, LLC
-license:
+license: GPLv3
 gr_supported_version: v3.7, v3.8
-#repo: https://github.com/sandialabs/gr-sandia_utils
-#icon: https://github.com/sandialabs/gr-sandia_utils/docs/sandia.png
+dependencies: gr-pdu_utils
+repo: https://github.com/sandialabs/gr-sandia_utils
+icon: https://raw.githubusercontent.com/sandialabs/gr-sandia_utils/master/docs/sandia.png
 ---
-

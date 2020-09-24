@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2020 gr-sandia_utils author.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,16 +29,28 @@ stream_gate_impl<T>::stream_gate_impl(bool flow_data, bool consume_data)
     : gr::block("stream_gate",
                 io_signature::make(1, 1, sizeof(T)),
                 io_signature::make(1, 1, sizeof(T))),
+      d_dropped_samples(0),
       d_flow_data(flow_data),
       d_consume_data(consume_data)
 {
-    /* NOOP */
+    // tags are manually propagated to account for dropped data
+    this->set_tag_propagation_policy(gr::block::TPP_DONT);
 }
 
 template <class T>
 stream_gate_impl<T>::~stream_gate_impl()
 {
     /* NOOP */
+}
+
+template <class T>
+void stream_gate_impl<T>::forecast(int noutput_items,
+                                   gr_vector_int& ninput_items_required)
+{
+    size_t ninputs = ninput_items_required.size();
+    for (size_t i = 0; i < ninputs; i++) {
+        ninput_items_required[i] = noutput_items;
+    }
 }
 
 template <class T>
@@ -92,25 +93,31 @@ int stream_gate_impl<T>::general_work(int noutput_items,
     T* out = (T*)output_items[0];
 
     if (d_flow_data) {
-        // copy data over
+        // tags are manually propagated so the offset can be adjusted to accomodate
+        // previously dropped data
+        std::vector<tag_t> tags;
+        this->get_tags_in_window(tags, 0, 0, noutput_items);
+        for (auto tag : tags) {
+            tag.offset -= d_dropped_samples;
+            this->add_item_tag(0, tag);
+        }
+
+        // copy data to output and update scheduler
         memcpy(out, in, sizeof(T) * noutput_items);
+        this->produce(0, noutput_items);
         this->consume_each(noutput_items);
 
-        // signal that samples were produced
-        this->produce(0, noutput_items);
     } else {
-        // should we consume data and drop it on the floor or just
-        // block and allow backpressuring?
+        // do not produce any items
+        this->produce(0, 0);
+
         if (d_consume_data) {
+            d_dropped_samples += noutput_items;
             this->consume_each(noutput_items);
-            // std::cout << "consumed " << noutput_items << " items " << std::endl;
         } else {
             // dont overload the processor
             usleep(1000);
         }
-
-        // do not produce any items
-        this->produce(0, 0);
     }
 
     return gr::block::WORK_CALLED_PRODUCE;

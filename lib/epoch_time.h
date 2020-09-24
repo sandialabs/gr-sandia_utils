@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 <+YOU OR YOUR COMPANY+>.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifndef INCLUDED_SANDIA_EPOCH_TIME_H
@@ -43,9 +32,19 @@ public:
         frac = modf(seconds, &sec);
         d_sec = static_cast<uint64_t>(sec);
         d_frac = frac;
+        d_T = 1.0;
     }
-    epoch_time(uint64_t second, double frac) : d_sec(second), d_frac(frac) {}
+    epoch_time(uint64_t second, double frac) : d_sec(second), d_frac(frac), d_T(1.0) {}
     ~epoch_time() {}
+
+    // copy constructor
+    epoch_time(const epoch_time& t)
+    {
+        d_sec = t.d_sec;
+        d_frac = t.d_frac;
+        d_T = t.d_T;
+    }
+
 
     // set operator
     void set(uint64_t second, double frac, double T)
@@ -68,6 +67,8 @@ public:
         d_frac += frac;
         d_sec += uint64_t(d_frac / 1.0);
         d_frac = fmod(d_frac, 1.0);
+
+        return *this;
     }
 
     epoch_time& operator+=(const int& N)
@@ -75,6 +76,8 @@ public:
         d_frac += (double)N * d_T;
         d_sec += uint64_t(d_frac / 1.0);
         d_frac = fmod(d_frac, 1.0);
+
+        return *this;
     }
 
     // public getters

@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2020 gr-sandia_utils author.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifdef HAVE_CONFIG_H
@@ -64,6 +53,7 @@ tagged_bits_to_bytes_impl::tagged_bits_to_bytes_impl(
     // the last time tag
     d_last_rx_time.sec = 0;
     d_last_rx_time.frac = 0.0;
+    d_last_rx_time_offset = 0;
 
     // stub mode is what to do with a chunk less that 8 bits long
     //   0 - DROP
@@ -288,27 +278,21 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
     int nbits_dropped = rel_offset % d_itemsize;
     int nbits_added = (d_itemsize - nbits_dropped) % d_itemsize;
 
-    if (d_stub_mode == DROP_STUB and nbits_dropped) {
-        // std::cout << "bits that got dropped: " << (nbits_dropped) << std::endl;
-        d_extra_bits -= nbits_dropped;
-    }
-
-    else if (d_stub_mode != DROP_STUB and nbits_added) {
-        // std::cout << "bits that got added: " << (nbits_added) << std::endl;
-        d_extra_bits += nbits_added;
-    }
-    // d_extra_bits = 0;
-    // std::cout << "d_extra_bits is "  << d_extra_bits << std::endl;
-
     // manual tag propagation so we can handle the case when we skip/drop bits
     std::vector<tag_t> alltags;
     get_tags_in_window(alltags, 0, rel_start, rel_offset);
+    bool added_burst_tag = false;
     for (auto tag : alltags) {
         // correct the tag offset on all tags
         uint64_t new_offset = (tag.offset + d_extra_bits) / d_itemsize;
         // std::cout << "moving tag from " << tag.offset << " to " << new_offset*d_vlen <<
         // std::endl;
         tag.offset = new_offset;
+
+        // flag so we can check to make sure we add a time tag
+        if (pmt::equal(tag.key, d_pmt_tag_key)) {
+            added_burst_tag = true;
+        }
 
         // rx_time tags will be time-shifted to the beginning of the byte
         if (pmt::equal(tag.key, d_rxtime_tag)) {
@@ -331,10 +315,21 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
             tag.value = updated_time;
         }
 
-        // add_item_tag(0, new_offset, tag.key, tag.value,
-        // pmt::intern("debug_sam_this_one"));
         add_item_tag(0, tag);
     }
+
+    if (d_stub_mode == DROP_STUB and nbits_dropped) {
+        // std::cout << "bits that got dropped: " << (nbits_dropped) << std::endl;
+        d_extra_bits -= nbits_dropped;
+    }
+
+    else if (d_stub_mode != DROP_STUB and nbits_added) {
+        // std::cout << "bits that got added: " << (nbits_added) << std::endl;
+        d_extra_bits += nbits_added;
+    }
+    // d_extra_bits = 0;
+    // std::cout << "d_extra_bits is "  << d_extra_bits << std::endl;
+
 
     // tag the BURST sample with time for later use
     if ((rel_offset != 0) and (tags.size()) and (tags[0].offset == abs_idx)) {
@@ -346,7 +341,10 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
                      d_pmt_burst_time,
                      time_pair_pmt,
                      d_pmt_tagged_bits_block);
+    } else if (added_burst_tag) {
+        GR_LOG_WARN(d_logger, "Tagged byte tag added without corresponding time tag")
     }
+
 
     //////////////////////////////////////////////////////////
     // Clean up and return
