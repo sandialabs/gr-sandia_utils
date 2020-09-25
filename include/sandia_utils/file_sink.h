@@ -1,21 +1,10 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2020 gr-sandia_utils author.
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
- * This is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this software; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifndef INCLUDED_SANDIA_UTILS_FILE_SINK_H
@@ -78,7 +67,7 @@ public:
     /*!
      * \brief Return a shared_ptr to a new instance of sandia_utils::file_sink.
      *
-     * \param data_type Input data type (complex, float, int, short, byte)
+     * \param data_type Input data type (complex, complex_int, float, int, short, byte)
      * \param itemsize Size of each item in bytes
      * \param file_type File type specifier
      * \param mode Recording mode (Manual or Triggered)
@@ -86,6 +75,7 @@ public:
      * \param rate Sampling rate (Hz)
      * \param out_dir Base output directory
      * \param name_spec Name specification format string
+     * \param debug turn on debug functionality
      */
     static sptr make(std::string data_type,
                      size_t itemsize,
@@ -94,7 +84,8 @@ public:
                      uint64_t nsamples,
                      int rate,
                      std::string out_dir,
-                     std::string name_spec);
+                     std::string name_spec,
+                     bool debug = false);
 
     /*!
      * \brief Set/Get recording state

@@ -13,8 +13,8 @@ parameters:
     label: File Type
     dtype: string
     default: raw
-    options: [message, raw, raw_header]
-    option_labels: [Message, Raw IQ, Raw IQ + Header]
+    options: [message, raw, raw_header@HAVE_BLU_GRC_OPTION@ ]
+    option_labels: [Message, Raw IQ, Raw IQ + Header@HAVE_BLU_GRC_LABEL@ ]
     hide: part
 -   id: rate
     label: Sampling Rate
@@ -91,7 +91,7 @@ templates:
         self.${id}.add_file_tags(${file_tags})
         self.${id}.set_file_queue_depth(${queue_depth})
 
-        % if file_type == "'message'":
+        % if context.get('file_type') == "'message'":
         # set message hop period
         self.${id}.set_msg_hop_period(${msg_period_ms})
         % endif

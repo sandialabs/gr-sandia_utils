@@ -1,27 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2020 gr-sandia_utils author.
+# Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+# (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+# retains certain rights in this software.
 #
-# This is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3, or (at your option)
-# any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street,
-# Boston, MA 02110-1301, USA.
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
 import sandia_utils_swig as sandia_utils
+import pmt
+
 
 class qa_tag_debug_file(gr_unittest.TestCase):
 
@@ -31,10 +22,34 @@ class qa_tag_debug_file(gr_unittest.TestCase):
     def tearDown(self):
         self.tb = None
 
-    def test_001_t(self):
-        # set up fg
+    def test_001_notags(self):
+        # data
+        src_data = (1, 1, 2, 2, 3, 3)
+
+        # blocks
+        src = blocks.vector_source_f(src_data)
+        cts = sandia_utils.tag_debug_file(gr.sizeof_float * 1, '', "", "/dev/null")
+
+        self.tb.connect(src, cts)
+
+        # execute
         self.tb.run()
-        # check data
+
+    def test_002_tags(self):
+        # data
+        src_data = (1, 1, 2, 2, 3, 3)
+
+        # blocks
+        sob_tag = gr.tag_utils.python_to_tag((34, pmt.intern("SOB"), pmt.PMT_T, pmt.intern("src")))
+        eob_tag = gr.tag_utils.python_to_tag((34 + (8 * 31), pmt.intern("EOB"), pmt.PMT_T, pmt.intern("src")))
+        src = blocks.vector_source_f(range(350), False, 1, [sob_tag, eob_tag])
+
+        cts = sandia_utils.tag_debug_file(gr.sizeof_float * 1, '', "", "/dev/null")
+
+        self.tb.connect(src, cts)
+
+        # execute
+        self.tb.run()
 
 
 if __name__ == '__main__':

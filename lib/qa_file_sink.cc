@@ -3,20 +3,7 @@
  *
  * This file is part of GNU Radio
  *
- * GNU Radio is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * GNU Radio is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with GNU Radio; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 51 Franklin Street,
- * Boston, MA 02110-1301, USA.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "sandia_utils/constants.h"
 #include "sandia_utils/file_sink.h"
@@ -240,7 +227,7 @@ BOOST_AUTO_TEST_CASE(t3)
     std::vector<gr::tag_t> tags;
     tags.push_back(gen_tag(gr::sandia_utils::RATE_KEY, pmt::from_double(30.72e6), 0));
     tags.push_back(gen_tag(gr::sandia_utils::FREQ_KEY, pmt::from_double(915e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::TIME_KEY,
+    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
                            pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
                            0));
 
@@ -298,7 +285,7 @@ BOOST_AUTO_TEST_CASE(t3)
                    pmt::from_double(915e6)),
         true);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL),
+        pmt::equal(pmt::dict_ref(dict, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
                    pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0))),
         true);
 
@@ -319,7 +306,7 @@ BOOST_AUTO_TEST_CASE(t4)
     std::vector<gr::tag_t> tags;
     tags.push_back(gen_tag(gr::sandia_utils::RATE_KEY, pmt::from_double(30.72e6), 0));
     tags.push_back(gen_tag(gr::sandia_utils::FREQ_KEY, pmt::from_double(915e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::TIME_KEY,
+    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
                            pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
                            0));
 
@@ -424,19 +411,19 @@ BOOST_AUTO_TEST_CASE(t5)
     pmt::pmt_t dict1 = pmt::car(message1);
     pmt::pmt_t dict2 = pmt::car(message2);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict1, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL),
+        pmt::equal(pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
                    pmt::PMT_NIL),
         false);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict2, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL),
+        pmt::equal(pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
                    pmt::PMT_NIL),
         false);
     pmt::pmt_t time_tuple1 =
-        pmt::dict_ref(dict1, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
     uint64_t tstart1 = pmt::to_uint64(pmt::tuple_ref(time_tuple1, 0));
 
     pmt::pmt_t time_tuple2 =
-        pmt::dict_ref(dict2, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
     uint64_t tstart2 = pmt::to_uint64(pmt::tuple_ref(time_tuple2, 0));
     BOOST_REQUIRE_EQUAL(tstart2, tstart1 + 1);
 
@@ -452,12 +439,12 @@ BOOST_AUTO_TEST_CASE(t6)
     std::vector<gr::tag_t> tags;
     tags.push_back(gen_tag(gr::sandia_utils::RATE_KEY, pmt::from_double(30.72e6), 0));
     tags.push_back(gen_tag(gr::sandia_utils::FREQ_KEY, pmt::from_double(915e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::TIME_KEY,
+    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
                            pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
                            0));
 
     // add a second tag with an updated time to simulate an overflow
-    tags.push_back(gen_tag(gr::sandia_utils::TIME_KEY,
+    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
                            pmt::make_tuple(pmt::from_uint64(1), pmt::from_double(0)),
                            2000));
 
@@ -517,17 +504,17 @@ BOOST_AUTO_TEST_CASE(t6)
     pmt::pmt_t dict1 = pmt::car(message1);
     pmt::pmt_t dict2 = pmt::car(message2);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict1, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL),
+        pmt::equal(pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
                    pmt::PMT_NIL),
         false);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict2, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL),
+        pmt::equal(pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
                    pmt::PMT_NIL),
         false);
     pmt::pmt_t time_tuple1 =
-        pmt::dict_ref(dict1, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
     pmt::pmt_t time_tuple2 =
-        pmt::dict_ref(dict2, gr::sandia_utils::TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
     uint64_t tstart1 = pmt::to_uint64(pmt::tuple_ref(time_tuple1, 0));
     uint64_t tstart2 = pmt::to_uint64(pmt::tuple_ref(time_tuple2, 0));
     BOOST_REQUIRE_EQUAL(tstart1, uint64_t(0));
