@@ -112,10 +112,12 @@ include(GrTest)
 # If your unit tests require special include paths, add them here
 #include_directories()
 # List all files that contain Boost.UTF unit tests here
-list(APPEND test_sandia_utils_sources
-  qa_file_sink.cc
-  qa_vita49_tcp_msg_source.cc
-)
+if (ENABLE_TESTING)
+  list(APPEND test_sandia_utils_sources
+    qa_file_sink.cc
+    qa_vita49_tcp_msg_source.cc
+  )
+endif(ENABLE_TESTING)
 # Anything we need to link to for the unit tests go here
 list(APPEND GR_TEST_TARGET_DEPS gnuradio-blocks gnuradio-sandia_utils)
 
