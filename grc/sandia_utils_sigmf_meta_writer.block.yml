@@ -1,0 +1,24 @@
+id: sandia_utils_sigmf_meta_writer
+label: SigMF-meta Writer
+category: '[Sandia]/Sandia Utilities'
+
+templates:
+  imports: import sandia_utils
+  make: sandia_utils.sigmf_meta_writer(${filename}, ${freq}, ${rate})
+
+parameters:
+-   id: filename
+    label: Filename
+    dtype: file_save
+- id: freq
+  label: Frequency (Hz)
+  dtype: int
+- id: rate
+  label: Samp Rate (Hz)
+  dtype: int
+  
+inputs:
+-   domain: message
+    id: in
+
+file_format: 1

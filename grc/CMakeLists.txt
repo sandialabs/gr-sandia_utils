@@ -42,5 +42,6 @@ install(FILES
     sandia_utils_tag_debug.block.yml
     sandia_utils_tagged_bits_to_bytes.block.yml
     sandia_utils_compute_stats.block.yml 
-    sandia_utils_vita49_tcp_msg_source.block.yml DESTINATION share/gnuradio/grc/blocks
+    sandia_utils_vita49_tcp_msg_source.block.yml
+    sandia_utils_sigmf_meta_writer.block.yml DESTINATION share/gnuradio/grc/blocks
 )

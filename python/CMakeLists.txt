@@ -28,7 +28,8 @@ GR_PYTHON_INSTALL(
     file_archiver.py
     csv_writer.py
     csv_reader.py
-    rftap_encap.py DESTINATION ${GR_PYTHON_DIR}/sandia_utils
+    rftap_encap.py
+    sigmf_meta_writer.py DESTINATION ${GR_PYTHON_DIR}/sandia_utils
 )
 
 ########################################################################
@@ -57,3 +58,4 @@ GR_ADD_TEST(qa_sandia_tag_debug ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}
 GR_ADD_TEST(qa_tagged_bits_to_bytes ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tagged_bits_to_bytes.py)
 GR_ADD_TEST(qa_compute_stats ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_compute_stats.py)
 GR_ADD_TEST(qa_burst_power_detector ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_burst_power_detector.py)
+GR_ADD_TEST(qa_sigmf_meta_writer ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_sigmf_meta_writer.py)
