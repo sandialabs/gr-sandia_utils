@@ -82,7 +82,7 @@ class csv_reader(gr.sync_block):
 
         # setup logger
         logger_name = 'gr_log.' + self.to_basic_block().alias()
-        if logger_name in gr.logger_get_names():
+        if logger_name in gr.logger_get_logger_names():
             self.log = gr.logger(logger_name)
         else:
             self.log = gr.logger('log')

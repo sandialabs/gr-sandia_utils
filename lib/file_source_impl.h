@@ -66,7 +66,7 @@ private:
     std::string d_filename;
 
     // message thread objects
-    boost::shared_ptr<gr::thread::thread> d_thread;
+    std::shared_ptr<gr::thread::thread> d_thread;
     bool d_finished;
 
 public:

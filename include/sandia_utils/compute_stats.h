@@ -28,7 +28,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API compute_stats : virtual public gr::block
 {
 public:
-    typedef boost::shared_ptr<compute_stats> sptr;
+    typedef std::shared_ptr<compute_stats> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of sandia_utils::compute_stats.

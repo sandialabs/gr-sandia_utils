@@ -35,7 +35,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API message_vector_raster_file_sink : virtual public gr::block
 {
 public:
-    typedef boost::shared_ptr<message_vector_raster_file_sink> sptr;
+    typedef std::shared_ptr<message_vector_raster_file_sink> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of

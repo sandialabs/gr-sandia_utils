@@ -28,7 +28,7 @@ namespace gr
     class SANDIA_UTILS_API vita49_tcp_msg_source : virtual public gr::block
     {
       public:
-        typedef boost::shared_ptr<vita49_tcp_msg_source> sptr;
+        typedef std::shared_ptr<vita49_tcp_msg_source> sptr;
 
         /*!
          * \brief Return a shared_ptr to a new instance of sandia_utils::vita49_tcp_msg_source.

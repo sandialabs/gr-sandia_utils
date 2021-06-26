@@ -126,7 +126,7 @@ bool file_source_impl::start()
         // NOTE: d_finished should be something explicitly thread safe. But since
         // nothing breaks on concurrent access, I'll just leave it as bool.
         d_finished = false;
-        d_thread = boost::shared_ptr<gr::thread::thread>(
+        d_thread = std::shared_ptr<gr::thread::thread>(
             new gr::thread::thread(boost::bind(&file_source_impl::run, this)));
     }
 

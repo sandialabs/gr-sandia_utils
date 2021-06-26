@@ -4,6 +4,7 @@
 # This file is a part of gr-sandia_utils
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
 
 ########################################################################
 # Setup library
@@ -71,7 +72,6 @@ if(NOT sandia_utils_sources)
     return()
 endif(NOT sandia_utils_sources)
 
-# library
 target_link_libraries(gnuradio-sandia_utils gnuradio::gnuradio-runtime
 	gnuradio::gnuradio-filter)
 target_link_libraries(gnuradio-sandia_utils Boost::chrono)

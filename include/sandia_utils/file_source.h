@@ -40,7 +40,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API file_source : virtual public gr::sync_block
 {
 public:
-    typedef boost::shared_ptr<file_source> sptr;
+    typedef std::shared_ptr<file_source> sptr;
 
     /*!
      * \brief Create a file source.

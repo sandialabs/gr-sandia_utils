@@ -10,7 +10,15 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-import sandia_utils_swig as sandia_utils
+try:
+    import sandia_utils
+except ImportError:
+    import os
+    import sys
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    sys.path.append(os.path.join(dirname, "bindings"))
+    import sandia_utils
+
 
 class qa_complex_to_interleaved_short (gr_unittest.TestCase):
 
@@ -23,7 +31,7 @@ class qa_complex_to_interleaved_short (gr_unittest.TestCase):
     def test_no_scale(self):
         # data
         src_data = (1+1j,2+2j,3+3j)
-        expected_result = (1,1,2,2,3,3)
+        expected_result = [1,1,2,2,3,3]
 
         # blocks
         src = blocks.vector_source_c(src_data)
@@ -44,7 +52,7 @@ class qa_complex_to_interleaved_short (gr_unittest.TestCase):
         # data
         src_data = (1+1j,2+2j,3+3j)
         scale = 2.0
-        expected_result =tuple(i*scale for i in (1,1,2,2,3,3))
+        expected_result = list(i*scale for i in [1,1,2,2,3,3])
 
         # blocks
         src = blocks.vector_source_c(src_data)
@@ -64,7 +72,7 @@ class qa_complex_to_interleaved_short (gr_unittest.TestCase):
     def test_vector(self):
         # data
         src_data = (1+2j,3+4j)
-        expected_result = (1,2,3,4)
+        expected_result = [1,2,3,4]
 
         # blocks
         src = blocks.vector_source_c(src_data)
@@ -83,4 +91,4 @@ class qa_complex_to_interleaved_short (gr_unittest.TestCase):
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_complex_to_interleaved_short, "qa_complex_to_interleaved_short.xml")
+    gr_unittest.run(qa_complex_to_interleaved_short)

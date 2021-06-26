@@ -29,7 +29,7 @@ namespace gr
     class SANDIA_UTILS_API file_writer_base
     {
       public:
-        typedef boost::shared_ptr<file_writer_base> sptr;
+        typedef std::shared_ptr<file_writer_base> sptr;
         typedef boost::function<void( std::string, epoch_time, double, double )> callback;
 
         /*!

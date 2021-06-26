@@ -10,7 +10,14 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-import sandia_utils_swig as sandia_utils
+try:
+    import sandia_utils
+except ImportError:
+    import os
+    import sys
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    sys.path.append(os.path.join(dirname, "bindings"))
+    import sandia_utils
 import pmt
 import time
 
