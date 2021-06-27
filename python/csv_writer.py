@@ -153,7 +153,7 @@ class csv_writer(gr.sync_block):
         self.set_msg_handler(self.message_port_name, self.message_handler)
 
     def message_handler(self, msg):
-        if not pmt.is_dict(msg):
+        if not pmt.is_pair(msg) and not pmt.is_dict(msg):
             return
 
         try:
