@@ -15,10 +15,30 @@
  */
 
 
- 
+
  static const char *__doc_gr_sandia_utils_sandia_tag_debug = R"doc()doc";
 
 
  static const char *__doc_gr_sandia_utils_sandia_tag_debug_make = R"doc()doc";
 
-  
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_current_tags = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_get_tag = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_clear_tags = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_num_tags = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_set_display = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_set_key_filter = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_sandia_tag_debug_key_filter = R"doc()doc";
+

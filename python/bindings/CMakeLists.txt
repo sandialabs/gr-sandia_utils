@@ -33,6 +33,7 @@ list(APPEND sandia_utils_python_files
     burst_power_detector_python.cc
     complex_to_interleaved_short_python.cc
     compute_stats_python.cc
+    constants_python.cc
     file_sink_python.cc
     file_source_python.cc
     interleaved_short_to_complex_python.cc
@@ -45,7 +46,7 @@ list(APPEND sandia_utils_python_files
     tagged_bits_to_bytes_python.cc
     python_bindings.cc)
 
-GR_PYBIND_MAKE_OOT(sandia_utils 
+GR_PYBIND_MAKE_OOT(sandia_utils
    ../..
    gr::sandia_utils
    "${sandia_utils_python_files}")

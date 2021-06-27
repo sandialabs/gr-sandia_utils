@@ -46,9 +46,22 @@ void bind_sandia_tag_debug(py::module& m)
            py::arg("store_all") =  true,
            D(sandia_tag_debug,make)
         )
-        
 
 
+
+        .def("current_tags", &sandia_tag_debug::current_tags, D(sandia_tag_debug, current_tags))
+
+        .def("get_tag", &sandia_tag_debug::get_tag, py::arg("id"), D(sandia_tag_debug, get_tag))
+
+        .def("clear_tags", &sandia_tag_debug::clear_tags, D(sandia_tag_debug, clear_tags))
+
+        .def("num_tags", &sandia_tag_debug::num_tags, D(sandia_tag_debug, num_tags))
+
+        .def("set_display", &sandia_tag_debug::set_display, py::arg("d"), D(sandia_tag_debug, set_display))
+
+        .def("set_key_filter", &sandia_tag_debug::set_key_filter, py::arg("key_filter"), D(sandia_tag_debug, set_key_filter))
+
+        .def("key_filter", &sandia_tag_debug::key_filter, D(sandia_tag_debug, key_filter))
 
         ;
 

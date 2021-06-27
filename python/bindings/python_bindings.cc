@@ -34,6 +34,8 @@ namespace py = pybind11;
     void bind_sandia_tag_debug(py::module& m);
     void bind_tagged_bits_to_bytes(py::module& m);
     void bind_stream_gate(py::module& m);
+    void bind_compute_stats(py::module& m);
+    void bind_constants(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -75,5 +77,7 @@ PYBIND11_MODULE(sandia_utils_python, m)
         bind_sandia_tag_debug(m);
         bind_tagged_bits_to_bytes(m);
         bind_stream_gate(m);
+        bind_compute_stats(m);
+        bind_constants(m);
     // ) END BINDING_FUNCTION_CALLS
 }
