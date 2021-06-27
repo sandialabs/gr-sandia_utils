@@ -1,7 +1,7 @@
 /*
- * Copyright 2021 Free Software Foundation, Inc.
- *
- * This file is part of GNU Radio
+ * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+ * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+ * retains certain rights in this software.
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -43,7 +43,7 @@ void bind_message_vector_raster_file_sink(py::module& m)
            py::arg("n_rows"),
            D(message_vector_raster_file_sink,make)
         )
-        
+
 
 
 
