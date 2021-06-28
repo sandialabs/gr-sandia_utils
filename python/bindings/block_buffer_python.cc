@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,24 +30,42 @@ namespace py = pybind11;
 void bind_block_buffer(py::module& m)
 {
 
-    using block_buffer    = gr::sandia_utils::block_buffer;
+    using block_buffer    = ::gr::sandia_utils::block_buffer;
 
 
-    py::class_<block_buffer,
-        gr::block,
-        gr::basic_block,
+    py::class_<block_buffer, gr::block, gr::basic_block,
         std::shared_ptr<block_buffer>>(m, "block_buffer", D(block_buffer))
 
         .def(py::init(&block_buffer::make),
            py::arg("itemsize"),
            py::arg("nsamples"),
            py::arg("samp_rate"),
-           py::arg("pass_data") =  true,
+           py::arg("pass_data") = true,
            D(block_buffer,make)
+        )
+        
+
+
+
+
+        
+        .def("set_nsamples",&block_buffer::set_nsamples,       
+            py::arg("nsamples"),
+            D(block_buffer,set_nsamples)
         )
 
 
+        
+        .def("set_pass_data",&block_buffer::set_pass_data,       
+            py::arg("pass_data"),
+            D(block_buffer,set_pass_data)
+        )
 
+
+        
+        .def("get_pass_data",&block_buffer::get_pass_data,       
+            D(block_buffer,get_pass_data)
+        )
 
         ;
 

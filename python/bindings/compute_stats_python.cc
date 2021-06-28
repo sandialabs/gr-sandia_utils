@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,18 +30,16 @@ namespace py = pybind11;
 void bind_compute_stats(py::module& m)
 {
 
-    using compute_stats    = gr::sandia_utils::compute_stats;
+    using compute_stats    = ::gr::sandia_utils::compute_stats;
 
 
-    py::class_<compute_stats,
-        gr::block,
-        gr::basic_block,
+    py::class_<compute_stats, gr::block, gr::basic_block,
         std::shared_ptr<compute_stats>>(m, "compute_stats", D(compute_stats))
 
         .def(py::init(&compute_stats::make),
            D(compute_stats,make)
         )
-
+        
 
 
 

@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,18 +30,16 @@ namespace py = pybind11;
 void bind_invert_tune(py::module& m)
 {
 
-    using invert_tune    = gr::sandia_utils::invert_tune;
+    using invert_tune    = ::gr::sandia_utils::invert_tune;
 
 
-    py::class_<invert_tune,
-        gr::block,
-        gr::basic_block,
+    py::class_<invert_tune, gr::block, gr::basic_block,
         std::shared_ptr<invert_tune>>(m, "invert_tune", D(invert_tune))
 
         .def(py::init(&invert_tune::make),
            D(invert_tune,make)
         )
-
+        
 
 
 

@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,13 +30,10 @@ namespace py = pybind11;
 void bind_burst_power_detector(py::module& m)
 {
 
-    using burst_power_detector    = gr::sandia_utils::burst_power_detector;
+    using burst_power_detector    = ::gr::sandia_utils::burst_power_detector;
 
 
-    py::class_<burst_power_detector,
-        gr::sync_block,
-        gr::block,
-        gr::basic_block,
+    py::class_<burst_power_detector, gr::sync_block, gr::block, gr::basic_block,
         std::shared_ptr<burst_power_detector>>(m, "burst_power_detector", D(burst_power_detector))
 
         .def(py::init(&burst_power_detector::make),
@@ -46,7 +43,7 @@ void bind_burst_power_detector(py::module& m)
            py::arg("holdoff"),
            D(burst_power_detector,make)
         )
-
+        
 
 
 

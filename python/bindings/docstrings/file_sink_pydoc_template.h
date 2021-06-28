@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -15,36 +15,67 @@
  */
 
 
-
+ 
  static const char *__doc_gr_sandia_utils_file_sink = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_file_sink_0 = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_file_sink_1 = R"doc()doc";
 
 
  static const char *__doc_gr_sandia_utils_file_sink_make = R"doc()doc";
 
 
  static const char *__doc_gr_sandia_utils_file_sink_set_recording = R"doc()doc";
+
+
  static const char *__doc_gr_sandia_utils_file_sink_get_recording = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_second_align = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_second_align = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_mode_0 = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_mode = R"doc()doc";
+ static const char *__doc_gr_sandia_utils_file_sink_set_second_align = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_mode_1 = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_gen_new_folder = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_gen_new_folder = R"doc()doc";
+ static const char *__doc_gr_sandia_utils_file_sink_get_second_align = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_freq = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_freq = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_rate = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_rate = R"doc()doc";
+ static const char *__doc_gr_sandia_utils_file_sink_set_mode_0 = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_nsamples = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_nsamples = R"doc()doc";
 
-static const char *__doc_gr_sandia_utils_file_sink_set_file_num_rollover = R"doc()doc";
-static const char *__doc_gr_sandia_utils_file_sink_get_file_num_rollover = R"doc()doc";
+ static const char *__doc_gr_sandia_utils_file_sink_get_mode = R"doc()doc";
 
+
+ static const char *__doc_gr_sandia_utils_file_sink_set_mode_1 = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_set_gen_new_folder = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_get_gen_new_folder = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_set_freq = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_get_freq = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_set_rate = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_get_rate = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_set_nsamples = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_get_nsamples = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_set_file_num_rollover = R"doc()doc";
+
+
+ static const char *__doc_gr_sandia_utils_file_sink_get_file_num_rollover = R"doc()doc";
+
+  

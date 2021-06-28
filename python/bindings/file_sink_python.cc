@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -32,15 +32,8 @@ void bind_file_sink(py::module& m)
 
     using file_sink    = ::gr::sandia_utils::file_sink;
 
-    py::enum_<::gr::sandia_utils::trigger_type_t>(m, "trigger_type_t")
-        .value("MANUAL", gr::sandia_utils::MANUAL) // 0
-        .value("TRIGGERED", gr::sandia_utils::TRIGGERED)   // 1
-        .export_values();
 
-    py::class_<file_sink,
-        gr::sync_block,
-        gr::block,
-        gr::basic_block,
+    py::class_<file_sink, gr::sync_block, gr::block, gr::basic_block,
         std::shared_ptr<file_sink>>(m, "file_sink", D(file_sink))
 
         .def(py::init(&file_sink::make),
@@ -52,38 +45,133 @@ void bind_file_sink(py::module& m)
            py::arg("rate"),
            py::arg("out_dir"),
            py::arg("name_spec"),
-           py::arg("debug") =  false,
-           D(file_sink,make))
+           py::arg("debug") = false,
+           D(file_sink,make)
+        )
+        
 
-        .def("set_recording", &file_sink::set_recording, py::arg("state"), D(file_sink, set_recording))
-        .def("get_recording", &file_sink::get_recording, D(file_sink, get_recording))
 
-        .def("set_second_align", &file_sink::set_second_align, py::arg("align"), D(file_sink, set_second_align))
-        .def("get_second_align", &file_sink::get_second_align, D(file_sink, get_second_align))
 
-        .def("set_mode", (void (file_sink::*)(gr::sandia_utils::trigger_type_t)) &file_sink::set_mode, py::arg("mode"), D(file_sink, set_mode, 0))
-        .def("get_mode", &file_sink::get_mode, D(file_sink, get_mode))
 
-        .def("set_mode", (void (file_sink::*)(int)) &file_sink::set_mode, py::arg("mode"), D(file_sink, set_mode, 1))
+        
+        .def("set_recording",&file_sink::set_recording,       
+            py::arg("state"),
+            D(file_sink,set_recording)
+        )
 
-        .def("set_gen_new_folder", &file_sink::set_gen_new_folder, py::arg("value"), D(file_sink, set_gen_new_folder))
-        .def("get_gen_new_folder", &file_sink::get_gen_new_folder, D(file_sink, get_gen_new_folder))
 
-        .def("set_freq", &file_sink::set_freq, py::arg("freq"), D(file_sink, set_freq))
-        .def("get_freq", &file_sink::get_freq, D(file_sink, get_freq))
+        
+        .def("get_recording",&file_sink::get_recording,       
+            D(file_sink,get_recording)
+        )
 
-        .def("set_rate", &file_sink::set_rate, py::arg("rate"), D(file_sink, set_rate))
-        .def("get_rate", &file_sink::get_rate, D(file_sink, get_rate))
 
-        .def("set_nsamples", &file_sink::set_nsamples, py::arg("nsamples"), D(file_sink, set_nsamples))
-        .def("get_nsamples", &file_sink::get_nsamples, D(file_sink, get_nsamples))
+        
+        .def("set_second_align",&file_sink::set_second_align,       
+            py::arg("align"),
+            D(file_sink,set_second_align)
+        )
 
-        .def("set_file_num_rollover", &file_sink::set_file_num_rollover, py::arg("rollover"), D(file_sink, set_file_num_rollover))
-        .def("get_file_num_rollover", &file_sink::get_file_num_rollover, D(file_sink, get_file_num_rollover))
 
+        
+        .def("get_second_align",&file_sink::get_second_align,       
+            D(file_sink,get_second_align)
+        )
+
+
+        
+        .def("set_mode",(void (file_sink::*)(gr::sandia_utils::trigger_type_t))&file_sink::set_mode,       
+            py::arg("mode"),
+            D(file_sink,set_mode,0)
+        )
+
+
+        
+        .def("get_mode",&file_sink::get_mode,       
+            D(file_sink,get_mode)
+        )
+
+
+        
+        .def("set_mode",(void (file_sink::*)(int))&file_sink::set_mode,       
+            py::arg("mode"),
+            D(file_sink,set_mode,1)
+        )
+
+
+        
+        .def("set_gen_new_folder",&file_sink::set_gen_new_folder,       
+            py::arg("value"),
+            D(file_sink,set_gen_new_folder)
+        )
+
+
+        
+        .def("get_gen_new_folder",&file_sink::get_gen_new_folder,       
+            D(file_sink,get_gen_new_folder)
+        )
+
+
+        
+        .def("set_freq",&file_sink::set_freq,       
+            py::arg("freq"),
+            D(file_sink,set_freq)
+        )
+
+
+        
+        .def("get_freq",&file_sink::get_freq,       
+            D(file_sink,get_freq)
+        )
+
+
+        
+        .def("set_rate",&file_sink::set_rate,       
+            py::arg("rate"),
+            D(file_sink,set_rate)
+        )
+
+
+        
+        .def("get_rate",&file_sink::get_rate,       
+            D(file_sink,get_rate)
+        )
+
+
+        
+        .def("set_nsamples",&file_sink::set_nsamples,       
+            py::arg("nsamples"),
+            D(file_sink,set_nsamples)
+        )
+
+
+        
+        .def("get_nsamples",&file_sink::get_nsamples,       
+            D(file_sink,get_nsamples)
+        )
+
+
+        
+        .def("set_file_num_rollover",&file_sink::set_file_num_rollover,       
+            py::arg("rollover"),
+            D(file_sink,set_file_num_rollover)
+        )
+
+
+        
+        .def("get_file_num_rollover",&file_sink::get_file_num_rollover,       
+            D(file_sink,get_file_num_rollover)
+        )
 
         ;
 
+    py::enum_<::gr::sandia_utils::trigger_type_t>(m,"trigger_type_t")
+        .value("MANUAL", ::gr::sandia_utils::MANUAL) // 0
+        .value("TRIGGERED", ::gr::sandia_utils::TRIGGERED) // 1
+        .export_values()
+    ;
+
+    py::implicitly_convertible<int, ::gr::sandia_utils::trigger_type_t>();
 
 
 

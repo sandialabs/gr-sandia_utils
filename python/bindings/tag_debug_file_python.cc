@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,13 +30,10 @@ namespace py = pybind11;
 void bind_tag_debug_file(py::module& m)
 {
 
-    using tag_debug_file    = gr::sandia_utils::tag_debug_file;
+    using tag_debug_file    = ::gr::sandia_utils::tag_debug_file;
 
 
-    py::class_<tag_debug_file,
-        gr::sync_block,
-        gr::block,
-        gr::basic_block,
+    py::class_<tag_debug_file, gr::sync_block, gr::block, gr::basic_block,
         std::shared_ptr<tag_debug_file>>(m, "tag_debug_file", D(tag_debug_file))
 
         .def(py::init(&tag_debug_file::make),
@@ -46,9 +43,49 @@ void bind_tag_debug_file(py::module& m)
            py::arg("filename"),
            D(tag_debug_file,make)
         )
+        
 
 
 
+
+        
+        .def("current_tags",&tag_debug_file::current_tags,       
+            D(tag_debug_file,current_tags)
+        )
+
+
+        
+        .def("num_tags",&tag_debug_file::num_tags,       
+            D(tag_debug_file,num_tags)
+        )
+
+
+        
+        .def("set_display",&tag_debug_file::set_display,       
+            py::arg("d"),
+            D(tag_debug_file,set_display)
+        )
+
+
+        
+        .def("set_filewrite",&tag_debug_file::set_filewrite,       
+            py::arg("w"),
+            py::arg("clear") = false,
+            D(tag_debug_file,set_filewrite)
+        )
+
+
+        
+        .def("set_key_filter",&tag_debug_file::set_key_filter,       
+            py::arg("key_filter"),
+            D(tag_debug_file,set_key_filter)
+        )
+
+
+        
+        .def("key_filter",&tag_debug_file::key_filter,       
+            D(tag_debug_file,key_filter)
+        )
 
         ;
 

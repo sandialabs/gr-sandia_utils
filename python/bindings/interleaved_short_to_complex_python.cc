@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,25 +30,35 @@ namespace py = pybind11;
 void bind_interleaved_short_to_complex(py::module& m)
 {
 
-    using interleaved_short_to_complex    = gr::sandia_utils::interleaved_short_to_complex;
+    using interleaved_short_to_complex    = ::gr::sandia_utils::interleaved_short_to_complex;
 
 
-    py::class_<interleaved_short_to_complex,
-        gr::sync_decimator,
-        gr::sync_block,
-        gr::block,
-        gr::basic_block,
+    py::class_<interleaved_short_to_complex, gr::sync_decimator,
         std::shared_ptr<interleaved_short_to_complex>>(m, "interleaved_short_to_complex", D(interleaved_short_to_complex))
 
         .def(py::init(&interleaved_short_to_complex::make),
-           py::arg("vector_input") =  false,
-           py::arg("swap") =  false,
-           py::arg("scale") =  1.0,
+           py::arg("vector_input") = false,
+           py::arg("swap") = false,
+           py::arg("scale") = 1.,
            D(interleaved_short_to_complex,make)
+        )
+        
+
+
+
+
+        
+        .def("set_swap",&interleaved_short_to_complex::set_swap,       
+            py::arg("swap"),
+            D(interleaved_short_to_complex,set_swap)
         )
 
 
-
+        
+        .def("set_scale",&interleaved_short_to_complex::set_scale,       
+            py::arg("scale"),
+            D(interleaved_short_to_complex,set_scale)
+        )
 
         ;
 

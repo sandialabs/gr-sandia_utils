@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,24 +30,27 @@ namespace py = pybind11;
 void bind_complex_to_interleaved_short(py::module& m)
 {
 
-    using complex_to_interleaved_short    = gr::sandia_utils::complex_to_interleaved_short;
+    using complex_to_interleaved_short    = ::gr::sandia_utils::complex_to_interleaved_short;
 
 
-    py::class_<complex_to_interleaved_short,
-        gr::sync_interpolator,
-        gr::sync_block,
-        gr::block,
-        gr::basic_block,
+    py::class_<complex_to_interleaved_short, gr::sync_interpolator,
         std::shared_ptr<complex_to_interleaved_short>>(m, "complex_to_interleaved_short", D(complex_to_interleaved_short))
 
         .def(py::init(&complex_to_interleaved_short::make),
-           py::arg("vector") =  false,
-           py::arg("scale") =  1.0,
+           py::arg("vector") = false,
+           py::arg("scale") = 1.,
            D(complex_to_interleaved_short,make)
         )
+        
 
 
 
+
+        
+        .def("set_scale",&complex_to_interleaved_short::set_scale,       
+            py::arg("scale"),
+            D(complex_to_interleaved_short,set_scale)
+        )
 
         ;
 

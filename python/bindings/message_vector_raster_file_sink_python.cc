@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,12 +30,10 @@ namespace py = pybind11;
 void bind_message_vector_raster_file_sink(py::module& m)
 {
 
-    using message_vector_raster_file_sink    = gr::sandia_utils::message_vector_raster_file_sink;
+    using message_vector_raster_file_sink    = ::gr::sandia_utils::message_vector_raster_file_sink;
 
 
-    py::class_<message_vector_raster_file_sink,
-        gr::block,
-        gr::basic_block,
+    py::class_<message_vector_raster_file_sink, gr::block, gr::basic_block,
         std::shared_ptr<message_vector_raster_file_sink>>(m, "message_vector_raster_file_sink", D(message_vector_raster_file_sink))
 
         .def(py::init(&message_vector_raster_file_sink::make),
@@ -43,9 +41,21 @@ void bind_message_vector_raster_file_sink(py::module& m)
            py::arg("n_rows"),
            D(message_vector_raster_file_sink,make)
         )
+        
 
 
 
+
+        
+        .def("reset",&message_vector_raster_file_sink::reset,       
+            D(message_vector_raster_file_sink,reset)
+        )
+
+
+        
+        .def("get_filename",&message_vector_raster_file_sink::get_filename,       
+            D(message_vector_raster_file_sink,get_filename)
+        )
 
         ;
 

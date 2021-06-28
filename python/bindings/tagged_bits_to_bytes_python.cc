@@ -1,7 +1,7 @@
 /*
- * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
- * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
- * retains certain rights in this software.
+ * Copyright 2021 Free Software Foundation, Inc.
+ *
+ * This file is part of GNU Radio
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
@@ -30,25 +30,44 @@ namespace py = pybind11;
 void bind_tagged_bits_to_bytes(py::module& m)
 {
 
-    using tagged_bits_to_bytes    = gr::sandia_utils::tagged_bits_to_bytes;
+    using tagged_bits_to_bytes    = ::gr::sandia_utils::tagged_bits_to_bytes;
 
 
-    py::class_<tagged_bits_to_bytes,
-        gr::block,
-        gr::basic_block,
+    py::class_<tagged_bits_to_bytes, gr::block, gr::basic_block,
         std::shared_ptr<tagged_bits_to_bytes>>(m, "tagged_bits_to_bytes", D(tagged_bits_to_bytes))
 
         .def(py::init(&tagged_bits_to_bytes::make),
-           py::arg("key") =  "BURST",
-           py::arg("little_endian") =  false,
-           py::arg("stub_mode") =  0,
-           py::arg("v_len") =  1,
-           py::arg("sample_rate") =  1,
+           py::arg("key") = "BURST",
+           py::arg("little_endian") = false,
+           py::arg("stub_mode") = 0,
+           py::arg("v_len") = 1,
+           py::arg("sample_rate") = 1,
            D(tagged_bits_to_bytes,make)
+        )
+        
+
+
+
+
+        
+        .def("set_vlen",&tagged_bits_to_bytes::set_vlen,       
+            py::arg("vlen"),
+            D(tagged_bits_to_bytes,set_vlen)
         )
 
 
+        
+        .def("set_little_endian_flag",&tagged_bits_to_bytes::set_little_endian_flag,       
+            py::arg("lsb_first"),
+            D(tagged_bits_to_bytes,set_little_endian_flag)
+        )
 
+
+        
+        .def("set_sample_rate",&tagged_bits_to_bytes::set_sample_rate,       
+            py::arg("samp_rate"),
+            D(tagged_bits_to_bytes,set_sample_rate)
+        )
 
         ;
 
