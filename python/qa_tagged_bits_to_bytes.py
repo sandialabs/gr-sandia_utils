@@ -10,7 +10,14 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-import sandia_utils_swig as sandia_utils
+try:
+    import sandia_utils
+except ImportError:
+    import os
+    import sys
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    sys.path.append(os.path.join(dirname, "bindings"))
+    import sandia_utils
 import pmt
 import time
 
@@ -28,7 +35,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1)
         offset = 0
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd)
+        expected_result = [0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -50,7 +57,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1)
         offset = 2
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd)
+        expected_result = [0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -74,7 +81,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_tag1 = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
         offset = 8
         src_tag2 = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd)
+        expected_result = [0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag1, src_tag2])
@@ -98,7 +105,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_tag1 = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
         offset = 10
         src_tag2 = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd)
+        expected_result = [0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag1, src_tag2])
@@ -122,7 +129,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_tag1 = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
         offset = 10
         src_tag2 = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd)
+        expected_result = [0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag1, src_tag2])
@@ -144,7 +151,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1)
         offset = 2
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd, 0xab, 0xcd)
+        expected_result = [0xab, 0xcd, 0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -167,7 +174,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1)
         offset = 2
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = () # vector is too big, should never get an output
+        expected_result = [] # vector is too big, should never get an output
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -192,7 +199,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1)
         offset = 2
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0xab, 0xcd)
+        expected_result = [0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -217,7 +224,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1)
         offset = 2
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0x01, 0xab, 0xcd)
+        expected_result = [0x01, 0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -239,7 +246,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         src_data = (0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1)
         offset = 2
         src_tag = gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")])
-        expected_result = (0x40, 0xab, 0xcd)
+        expected_result = [0x40, 0xab, 0xcd]
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, [src_tag])
@@ -271,7 +278,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         for offset in offsets:
             tags.append(gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")]))
 
-        expected_result = (0x0,) * 5
+        expected_result = [0x0] * 5
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, tags)
@@ -307,7 +314,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         for offset in offsets:
             tags.append(gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")]))
 
-        expected_result = (0x0,) * 5
+        expected_result = [0x0] * 5
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, tags)
@@ -343,7 +350,7 @@ class qa_tagged_bits_to_bytes(gr_unittest.TestCase):
         for offset in offsets:
             tags.append(gr.tag_utils.python_to_tag([offset, pmt.intern("BURST"), pmt.from_uint64(0), pmt.intern("test_simple_source")]))
 
-        expected_result = (0x0,) * 5
+        expected_result = [0x0] * 5
 
         # blocks
         src = blocks.vector_source_b(src_data, False, 1, tags)

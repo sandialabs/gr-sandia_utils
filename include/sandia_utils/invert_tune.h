@@ -32,7 +32,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API invert_tune : virtual public gr::block
 {
 public:
-    typedef boost::shared_ptr<invert_tune> sptr;
+    typedef std::shared_ptr<invert_tune> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of sandia_utils::invert_tune.

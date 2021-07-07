@@ -44,7 +44,7 @@ class SANDIA_UTILS_API sandia_tag_debug : virtual public sync_block
 {
 public:
     // gr::blocks::tag_debug::sptr
-    typedef boost::shared_ptr<sandia_tag_debug> sptr;
+    typedef std::shared_ptr<sandia_tag_debug> sptr;
 
     /*!
      * Build a tag debug block

@@ -10,7 +10,14 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-import sandia_utils_swig as sandia_utils
+try:
+    import sandia_utils
+except ImportError:
+    import os
+    import sys
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    sys.path.append(os.path.join(dirname, "bindings"))
+    import sandia_utils
 
 
 class qa_stream_gate(gr_unittest.TestCase):
@@ -23,8 +30,8 @@ class qa_stream_gate(gr_unittest.TestCase):
 
     def test_001_flow(self):
         # data
-        src_data = (1, 1, 2, 2, 3, 3)
-        expected_result = (1, 1, 2, 2, 3, 3)
+        src_data = [1, 1, 2, 2, 3, 3]
+        expected_result = [1, 1, 2, 2, 3, 3]
 
         # blocks
         src = blocks.vector_source_f(src_data)
@@ -43,8 +50,8 @@ class qa_stream_gate(gr_unittest.TestCase):
 
     def test_002_block(self):
         # data
-        src_data = (1, 1, 2, 2, 3, 3)
-        expected_result = ()
+        src_data = [1, 1, 2, 2, 3, 3]
+        expected_result = []
 
         # blocks
         src = blocks.vector_source_f(src_data)

@@ -60,7 +60,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API tagged_bits_to_bytes : virtual public gr::block
 {
 public:
-    typedef boost::shared_ptr<tagged_bits_to_bytes> sptr;
+    typedef std::shared_ptr<tagged_bits_to_bytes> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of sandia_utils::tagged_bits_to_bytes.

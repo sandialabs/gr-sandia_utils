@@ -102,7 +102,7 @@ class csv_writer(gr.sync_block):
 
         # setup logger
         logger_name = 'gr_log.' + self.to_basic_block().alias()
-        if logger_name in gr.logger_get_names():
+        if logger_name in gr.logger_get_logger_names():
             self.log = gr.logger(logger_name)
         else:
             self.log = gr.logger('log')
@@ -153,7 +153,7 @@ class csv_writer(gr.sync_block):
         self.set_msg_handler(self.message_port_name, self.message_handler)
 
     def message_handler(self, msg):
-        if not pmt.is_dict(msg):
+        if not pmt.is_pair(msg) and not pmt.is_dict(msg):
             return
 
         try:

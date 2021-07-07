@@ -4,6 +4,7 @@
 # This file is a part of gr-sandia_utils
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
 
 ########################################################################
 # Include python install macros
@@ -12,6 +13,8 @@ include(GrPython)
 if(NOT PYTHONINTERP_FOUND)
     return()
 endif()
+
+add_subdirectory(bindings)
 
 ########################################################################
 # Install python sources

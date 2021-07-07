@@ -31,7 +31,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API complex_to_interleaved_short : virtual public gr::sync_interpolator
 {
 public:
-    typedef boost::shared_ptr<complex_to_interleaved_short> sptr;
+    typedef std::shared_ptr<complex_to_interleaved_short> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of

@@ -9,7 +9,14 @@
 
 
 from gnuradio import gr, gr_unittest, blocks
-import sandia_utils_swig as sandia_utils
+try:
+    import sandia_utils
+except ImportError:
+    import os
+    import sys
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    sys.path.append(os.path.join(dirname, "bindings"))
+    import sandia_utils
 import pmt
 import time
 
@@ -300,4 +307,4 @@ class qa_sandia_tag_debug(gr_unittest.TestCase):
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_sandia_tag_debug, "qa_sandia_tag_debug.xml")
+    gr_unittest.run(qa_sandia_tag_debug)

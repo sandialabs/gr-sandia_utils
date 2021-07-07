@@ -30,7 +30,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API burst_power_detector : virtual public gr::sync_block
 {
 public:
-    typedef boost::shared_ptr<burst_power_detector> sptr;
+    typedef std::shared_ptr<burst_power_detector> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of sandia_utils::burst_power_detector.

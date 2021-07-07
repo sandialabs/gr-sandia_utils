@@ -67,7 +67,7 @@ namespace gr
         gr::logger_ptr d_logger;
 
       public:
-        typedef boost::shared_ptr<file_reader_base> sptr;
+        typedef std::shared_ptr<file_reader_base> sptr;
 
         /**
          * Consructor

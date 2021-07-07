@@ -31,7 +31,7 @@ template <class T>
 class SANDIA_UTILS_API stream_gate : virtual public gr::block
 {
 public:
-    typedef boost::shared_ptr<stream_gate<T>> sptr;
+    typedef std::shared_ptr<stream_gate<T>> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of sandia_utils::stream_gate.

@@ -29,7 +29,7 @@ namespace sandia_utils {
 class SANDIA_UTILS_API interleaved_short_to_complex : virtual public gr::sync_decimator
 {
 public:
-    typedef boost::shared_ptr<interleaved_short_to_complex> sptr;
+    typedef std::shared_ptr<interleaved_short_to_complex> sptr;
 
     /*!
      * \brief Return a shared_ptr to a new instance of

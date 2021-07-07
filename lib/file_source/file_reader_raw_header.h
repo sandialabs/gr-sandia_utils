@@ -22,7 +22,7 @@ namespace gr
       private:
         // nothing here
       public:
-        // typedef boost::shared_ptr<file_reader_base> sptr;
+        // typedef std::shared_ptr<file_reader_base> sptr;
 
         file_reader_raw_header( size_t itemsize, gr::logger_ptr logger ) : file_reader_base( itemsize, logger )
         {

@@ -1,5 +1,6 @@
-#
-# Copyright 2008,2009 Free Software Foundation, Inc.
+# Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
+# (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
+# retains certain rights in this software.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
@@ -10,17 +11,17 @@
 This is the GNU Radio SANDIA_UTILS module. Place your Python package
 description here (python/__init__.py).
 '''
-from __future__ import unicode_literals
+import os
 
-# import swig generated symbols into the sandia_utils namespace
+# import pybind11 generated symbols into the sandia_utils namespace
 try:
     # this might fail if the module is python-only
-    from .sandia_utils_swig import *
-except ImportError as e:
-    print("GR-Sandia_Utils Import Error: {}".format(e))
+    from .sandia_utils_python import *
+except ModuleNotFoundError:
     pass
 
 # import any pure python here
+#
 from .file_monitor import file_monitor
 from .max_every_n import max_every_n
 from .message_file_debug import message_file_debug

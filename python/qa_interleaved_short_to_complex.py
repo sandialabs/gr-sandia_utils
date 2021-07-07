@@ -10,7 +10,15 @@
 
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
-import sandia_utils_swig as sandia_utils
+try:
+    import sandia_utils
+except ImportError:
+    import os
+    import sys
+    dirname, filename = os.path.split(os.path.abspath(__file__))
+    sys.path.append(os.path.join(dirname, "bindings"))
+    import sandia_utils
+
 
 class qa_interleaved_short_to_complex(gr_unittest.TestCase):
 
@@ -82,4 +90,4 @@ class qa_interleaved_short_to_complex(gr_unittest.TestCase):
         self.assertComplexTuplesAlmostEqual(expected_result, result_data, 5)
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_interleaved_short_to_complex, "qa_interleaved_short_to_complex.xml")
+    gr_unittest.run(qa_interleaved_short_to_complex)
