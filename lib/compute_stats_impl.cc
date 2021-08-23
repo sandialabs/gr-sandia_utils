@@ -32,7 +32,7 @@ compute_stats_impl::compute_stats_impl()
 {
     message_port_register_in(pmt::mp("pdu_in"));
     set_msg_handler(pmt::mp("pdu_in"),
-                    boost::bind(&compute_stats_impl::handle_pdu, this, _1));
+                    boost::bind(&compute_stats_impl::handle_pdu, this, boost::placeholders::_1));
     message_port_register_out(PMT_PDU_OUT);
 }
 

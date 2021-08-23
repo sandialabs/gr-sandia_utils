@@ -37,7 +37,7 @@ invert_tune_impl::invert_tune_impl()
       d_freq_key(pmt::mp("dsp_freq"))
 {
     message_port_register_in(d_mp_name);
-    set_msg_handler(d_mp_name, boost::bind(&invert_tune_impl::handle_msg, this, _1));
+    set_msg_handler(d_mp_name, boost::bind(&invert_tune_impl::handle_msg, this, boost::placeholders::_1));
     message_port_register_out(d_mp_name);
 }
 

@@ -56,7 +56,7 @@ message_vector_raster_file_sink_impl::message_vector_raster_file_sink_impl(
     message_port_register_in(d_mp_name);
     set_msg_handler(
         d_mp_name,
-        boost::bind(&message_vector_raster_file_sink_impl::handle_msg, this, _1));
+        boost::bind(&message_vector_raster_file_sink_impl::handle_msg, this, boost::placeholders::_1));
 }
 
 /*

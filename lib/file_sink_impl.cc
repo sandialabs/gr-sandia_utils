@@ -71,7 +71,7 @@ file_sink_impl::file_sink_impl(std::string data_type,
     if (d_type == "message") {
         // register message handlers
         message_port_register_in(IN_KEY);
-        set_msg_handler(IN_KEY, boost::bind(&file_sink_impl::handle_msg, this, _1));
+        set_msg_handler(IN_KEY, boost::bind(&file_sink_impl::handle_msg, this, boost::placeholders::_1));
 
         // Note: file is opened in start()
     } else {
@@ -81,7 +81,7 @@ file_sink_impl::file_sink_impl(std::string data_type,
 
         // register update callback
         d_file_writer->register_callback(
-            boost::bind(&file_sink_impl::send_update, this, _1, _2, _3, _4));
+            boost::bind(&file_sink_impl::send_update, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4));
 
         // compute sampling period - needed to determine how many samples to
         // discard when starting recording

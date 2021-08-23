@@ -109,7 +109,7 @@ file_source_impl::file_source_impl(
     // register message ports
     message_port_register_in(pmt::intern("pdu"));
     set_msg_handler(pmt::intern("pdu"),
-                    boost::bind(&file_source_impl::handle_msg, this, _1));
+                    boost::bind(&file_source_impl::handle_msg, this, boost::placeholders::_1));
 }
 
 /*
