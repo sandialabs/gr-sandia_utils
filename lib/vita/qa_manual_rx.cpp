@@ -2,7 +2,7 @@
  * qa_manual_rx.cpp
  *
  *  Created on: Jul 23, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include <stdio.h>

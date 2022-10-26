@@ -21,7 +21,7 @@ outputs:
     optional: true
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.python_message_interface(${queue_size})
 
 file_format: 1

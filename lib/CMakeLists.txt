@@ -13,8 +13,6 @@ include(GrPlatform) #define LIB_SUFFIX
 list(APPEND sandia_utils_sources
     block_buffer_impl.cc
     burst_power_detector_impl.cc
-    interleaved_short_to_complex_impl.cc
-    complex_to_interleaved_short_impl.cc
     file_sink_impl.cc
     invert_tune_impl.cc
     file_source_impl.cc
@@ -26,6 +24,7 @@ list(APPEND sandia_utils_sources
     tagged_bits_to_bytes_impl.cc
     compute_stats_impl.cc
     vita49_tcp_msg_source_impl.cc
+    constants.cc
 )
 
 add_library(gnuradio-sandia_utils SHARED ${sandia_utils_sources})
@@ -74,7 +73,7 @@ endif(NOT sandia_utils_sources)
 # library
 target_link_libraries(gnuradio-sandia_utils gnuradio::gnuradio-runtime
 	gnuradio::gnuradio-filter)
-target_link_libraries(gnuradio-sandia_utils Boost::chrono)
+target_link_libraries(gnuradio-sandia_utils Boost::chrono Boost::filesystem)
 if (BLUEFILE_FOUND)
   message(STATUS "Adding bluefile libraries: ${BLUEFILE_LIBRARIES}")
   target_link_libraries(gnuradio-sandia_utils ${BLUEFILE_LIBRARIES})
@@ -96,7 +95,7 @@ endif(APPLE)
 # Install built library files
 ########################################################################
 include(GrMiscUtils)
-GR_LIBRARY_FOO(gnuradio-sandia_utils)
+GR_LIBRARY_FOO(gnuradio-sandia_utils Boost::chrono)
 
 ########################################################################
 # Print summary
@@ -117,7 +116,7 @@ list(APPEND test_sandia_utils_sources
   qa_vita49_tcp_msg_source.cc
 )
 # Anything we need to link to for the unit tests go here
-list(APPEND GR_TEST_TARGET_DEPS gnuradio-blocks gnuradio-sandia_utils)
+list(APPEND GR_TEST_TARGET_DEPS gnuradio::gnuradio-blocks gnuradio-sandia_utils Boost::filesystem)
 
 if(NOT test_sandia_utils_sources)
     MESSAGE(STATUS "No C++ unit tests... skipping")

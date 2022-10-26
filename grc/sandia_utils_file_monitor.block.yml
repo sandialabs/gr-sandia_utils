@@ -25,7 +25,7 @@ inputs:
     optional: true
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.file_monitor(${nfiles},${output_path},${copy_data})
     callbacks:
     - set_copy(${copy_data})

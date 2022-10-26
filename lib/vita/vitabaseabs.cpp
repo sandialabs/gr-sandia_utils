@@ -2,7 +2,7 @@
  * vitabaseabs.cpp
  *
  *  Created on: Jul 20, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include "vitabaseabs.h"

@@ -2,7 +2,7 @@
  * VRTPacket.cpp
  *
  *  Created on: Jul 22, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include "VRTPacket.h"

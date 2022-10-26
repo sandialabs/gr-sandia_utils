@@ -62,12 +62,12 @@ file_source_impl::file_source_impl(
       d_itemsize(itemsize),
       d_repeat(repeat),
       d_force_new(force_new),
-      d_tag_on_open(false),
       d_repeat_cnt(0),
       d_add_begin_tag(pmt::PMT_NIL),
-      d_tag_now(false),
       d_first_pass(true),
       d_file_queue_depth(DEFAULT_FILE_QUEUE_DEPTH),
+      d_tag_on_open(false),
+      d_tag_now(false),
       d_method_count(0),
       d_msg_hop_period(0)
 {
@@ -77,7 +77,7 @@ file_source_impl::file_source_impl(
     // get reader
     if (strcmp(type, "message") == 0) {
         // register output port
-        message_port_register_out(OUT_KEY);
+        message_port_register_out(PMTCONSTSTR__out());
     } else {
         if (strcmp(type, "raw") == 0) {
             d_reader = file_reader_base::sptr(new file_reader_base(itemsize, d_logger));
@@ -107,9 +107,9 @@ file_source_impl::file_source_impl(
     }
 
     // register message ports
-    message_port_register_in(pmt::intern("pdu"));
-    set_msg_handler(pmt::intern("pdu"),
-                    boost::bind(&file_source_impl::handle_msg, this, _1));
+    message_port_register_in(PMTCONSTSTR__pdu());
+    set_msg_handler(PMTCONSTSTR__pdu(),
+                    [this](pmt::pmt_t msg) { this->handle_msg(msg); });
 }
 
 /*
@@ -127,7 +127,7 @@ bool file_source_impl::start()
         // nothing breaks on concurrent access, I'll just leave it as bool.
         d_finished = false;
         d_thread = boost::shared_ptr<gr::thread::thread>(
-            new gr::thread::thread(boost::bind(&file_source_impl::run, this)));
+            new gr::thread::thread([this]() { this->run(); }));
     }
 
     return block::start();
@@ -194,7 +194,7 @@ void file_source_impl::run()
                              str(boost::format("Unable to deserialize message")));
                 break;
             }
-            message_port_pub(OUT_KEY, msg);
+            message_port_pub(PMTCONSTSTR__out(), msg);
 
             // check if end of file and whether to reopen
             if (file.peek() == EOF) {
@@ -219,6 +219,9 @@ void file_source_impl::set_msg_hop_period(int period_ms)
 
 bool file_source_impl::seek(long seek_point, int whence)
 {
+    if (not d_reader->is_open())
+        return true;
+
     return d_reader->seek(seek_point, whence);
 }
 
@@ -292,42 +295,35 @@ void file_source_impl::set_begin_tag(pmt::pmt_t tag)
 
 void file_source_impl::handle_msg(pmt::pmt_t pdu)
 {
-    // is_pair() will pass both dictionaries and pairs (possible PDUs...)
-    if (!pmt::is_pair(pdu)) {
+    // incoming message can be a pure dictionary or either a pdu or pair
+    // with the first element a dictionary
+    pmt::pmt_t dict = pmt::make_dict();
+    if (pmt::is_dict(pdu)) {
+        dict = pdu;
+    } else if (pmt::is_pair(pdu)) {
+        // must have a dictionary as the first element
+        if (not pmt::is_dict(pmt::car(pdu))) {
+            GR_LOG_DEBUG(d_logger, "pair does not have a dict as first element");
+            return;
+        }
+        dict = pmt::car(pdu);
+    } else {
+        GR_LOG_DEBUG(d_logger, "pmt is neither a dict nor a pair/pdu");
         return;
     }
 
-    try {
-        // Will fail if msg is not a dictionary or PDU (dict/pmt pair)
-        pmt::pmt_t x = pmt::dict_keys(pdu);
-    } catch (const pmt::wrong_type& e) {
-        return;
-    }
-
-    // we have a dictionary or a pair of which one element is a dict
+    // get file name
     pmt::pmt_t fname_pmt;
-    fname_pmt = pmt::dict_ref(pdu, FNAME_KEY, pmt::PMT_NIL);
+    fname_pmt = pmt::dict_ref(dict, PMTCONSTSTR__fname(), pmt::PMT_NIL);
 
     if (not pmt::equal(fname_pmt, pmt::PMT_NIL)) {
         // to be safe, lets check if file even exists
         std::string fname = pmt::symbol_to_string(fname_pmt);
         if (boost::filesystem::exists(fname)) {
             this->open(fname.c_str(), d_repeat);
-        }
-    } else {
-        // could still be a PDU
-        pmt::pmt_t car = pmt::car(pdu);
-        fname_pmt = pmt::dict_ref(car, FNAME_KEY, pmt::PMT_NIL);
-        if (not pmt::equal(fname_pmt, pmt::PMT_NIL)) {
-            // to be safe, lets check if file even exists
-            std::string fname = pmt::symbol_to_string(fname_pmt);
-            if (boost::filesystem::exists(fname)) {
-                d_filename = fname;
-                if (d_output_type != "message") {
-                    // attempt to open for processing
-                    this->open(fname.c_str(), d_repeat);
-                }
-            }
+        } else {
+            GR_LOG_ERROR(d_logger,
+                         boost::format("file %s does not exist") % fname.c_str());
         }
     }
 

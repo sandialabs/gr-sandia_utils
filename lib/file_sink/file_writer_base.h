@@ -10,17 +10,17 @@
 #ifndef INCLUDED_SANDIA_UTILS_FILE_WRITER_BASE_H
 #define INCLUDED_SANDIA_UTILS_FILE_WRITER_BASE_H
 
-#include <string>
-#include <stdint.h>           /* uint64_t */
+#include "../epoch_time.h"
+#include <gnuradio/logger.h>
+#include <gnuradio/sandia_utils/api.h>
+#include <pmt/pmt.h>
+#include <stdint.h> /* uint64_t */
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <sandia_utils/api.h>
-#include <pmt/pmt.h>
-#include <gnuradio/logger.h>
-#include "../epoch_time.h"
+#include <string>
 
 namespace gr
 {
@@ -30,7 +30,8 @@ namespace gr
     {
       public:
         typedef boost::shared_ptr<file_writer_base> sptr;
-        typedef boost::function<void( std::string, epoch_time, double, double )> callback;
+        typedef boost::function<void(std::string, epoch_time, double, double, uint64_t)>
+            callback;
 
         /*!
          * \brief Return a shared_ptr to a new instance of sandia_utils::file_writer_base.

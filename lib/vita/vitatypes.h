@@ -2,7 +2,7 @@
  * vitatypes.h
  *
  *  Created on: Jul 21, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_VITATYPES_H_

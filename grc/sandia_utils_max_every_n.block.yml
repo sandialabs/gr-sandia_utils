@@ -18,7 +18,7 @@ outputs:
     dtype: float
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.max_every_n(${n})
 
 file_format: 1

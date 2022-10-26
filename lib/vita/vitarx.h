@@ -2,7 +2,7 @@
  * vitarx.h
  *
  *  Created on: Jul 22, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_VITARX_H_

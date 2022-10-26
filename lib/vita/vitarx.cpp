@@ -2,7 +2,7 @@
  * vitarx.cpp
  *
  *  Created on: Jul 22, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include <arpa/inet.h>
@@ -164,8 +164,6 @@ int vita_rx::close_socket(void)
 
     rxPacket.reset();
 
-    printf("vita_rx closed\n");
-
     return ans;
 }
 
@@ -234,7 +232,7 @@ void vita_rx::processData(uint8_t* buf, int sz)
 {
     int i;
     int stat;
-    uint32_t raw;
+    //uint32_t raw;
 
     for (i = 0; i < sz; i++) {
         // printf("%2x ", buf[i] & 0xff );

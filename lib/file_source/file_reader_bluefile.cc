@@ -6,8 +6,8 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-#include<sandia_utils/constants.h>
 #include "file_reader_bluefile.h"
+#include <gnuradio/sandia_utils/constants.h>
 
 namespace gr
 {
@@ -39,10 +39,10 @@ namespace gr
       gr::tag_t tag;
       d_tags.clear();
       // tag.key = FREQ_KEY; tag.value = pmt::from_double(metadata[0]); d_tags.push_back(tag);
-      tag.key = RATE_KEY;
+      tag.key = PMTCONSTSTR__rate();
       tag.value = pmt::from_double( rate );
       d_tags.push_back( tag );
-      tag.key = RX_TIME_KEY;
+      tag.key = PMTCONSTSTR__rx_time();
       tag.value = pmt::make_tuple( pmt::from_uint64( file_time.epoch_sec() ),
           pmt::from_double( file_time.epoch_frac() ) );
       d_tags.push_back( tag );
@@ -56,7 +56,7 @@ namespace gr
         try
         {
           freq = std::stod( frequency, NULL );
-          tag.key = FREQ_KEY;
+          tag.key = PMTCONSTSTR__rx_freq();
           tag.value = pmt::from_double( freq );
           d_tags.push_back( tag );
         }

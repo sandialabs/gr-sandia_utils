@@ -12,6 +12,7 @@
 #endif
 
 #include "file_sink_impl.h"
+#include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
 #include <boost/filesystem/path.hpp>
 
@@ -32,6 +33,7 @@ file_sink::sptr file_sink::make(std::string type,
     return gnuradio::get_initial_sptr(new file_sink_impl(
         type, itemsize, file_type, mode, nsamples, rate, out_dir, name_spec, debug));
 }
+
 
 /*
  * The private constructor
@@ -70,8 +72,9 @@ file_sink_impl::file_sink_impl(std::string data_type,
 
     if (d_type == "message") {
         // register message handlers
-        message_port_register_in(IN_KEY);
-        set_msg_handler(IN_KEY, boost::bind(&file_sink_impl::handle_msg, this, _1));
+        message_port_register_in(PMTCONSTSTR__in());
+        set_msg_handler(PMTCONSTSTR__in(),
+                        [this](pmt::pmt_t msg) { this->handle_msg(msg); });
 
         // Note: file is opened in start()
     } else {
@@ -80,8 +83,13 @@ file_sink_impl::file_sink_impl(std::string data_type,
             data_type, file_type, itemsize, nsamples, rate, out_dir, name_spec, d_logger);
 
         // register update callback
-        d_file_writer->register_callback(
-            boost::bind(&file_sink_impl::send_update, this, _1, _2, _3, _4));
+        d_file_writer->register_callback([this](std::string fname,
+                                                epoch_time file_time,
+                                                double freq,
+                                                double rate,
+                                                uint64_t samples) {
+            this->send_update(fname, file_time, freq, rate, samples);
+        });
 
         // compute sampling period - needed to determine how many samples to
         // discard when starting recording
@@ -101,7 +109,7 @@ file_sink_impl::file_sink_impl(std::string data_type,
     }
 
     // setup output message portion
-    message_port_register_out(PDU_KEY);
+    message_port_register_out(PMTCONSTSTR__pdu());
 }
 
 /*
@@ -125,9 +133,9 @@ void file_sink_impl::setup_rpc()
         new rpcbasic_register_get<file_sink, bool>(alias(),
                                                    "recording",
                                                    &file_sink::get_recording,
-                                                   pmt::mp(false),
-                                                   pmt::mp(true),
-                                                   pmt::mp(false),
+                                                   pmt::PMT_F,
+                                                   pmt::PMT_T,
+                                                   pmt::PMT_F,
                                                    "Logical",
                                                    "Recording?",
                                                    RPC_PRIVLVL_MIN,
@@ -137,9 +145,9 @@ void file_sink_impl::setup_rpc()
         new rpcbasic_register_set<file_sink, bool>(alias(),
                                                    "recording",
                                                    &file_sink::set_recording,
-                                                   pmt::mp(false),
-                                                   pmt::mp(true),
-                                                   pmt::mp(false),
+                                                   pmt::PMT_F,
+                                                   pmt::PMT_T,
+                                                   pmt::PMT_F,
                                                    "Logical",
                                                    "Recording?",
                                                    RPC_PRIVLVL_MIN,
@@ -173,9 +181,9 @@ void file_sink_impl::setup_rpc()
         new rpcbasic_register_get<file_sink, bool>(alias(),
                                                    "new_folder",
                                                    &file_sink::get_gen_new_folder,
-                                                   pmt::mp(false),
-                                                   pmt::mp(true),
-                                                   pmt::mp(false),
+                                                   pmt::PMT_F,
+                                                   pmt::PMT_T,
+                                                   pmt::PMT_F,
                                                    "Logical",
                                                    "Gen New Folder?",
                                                    RPC_PRIVLVL_MIN,
@@ -185,9 +193,9 @@ void file_sink_impl::setup_rpc()
         new rpcbasic_register_set<file_sink, bool>(alias(),
                                                    "new_folder",
                                                    &file_sink::set_gen_new_folder,
-                                                   pmt::mp(false),
-                                                   pmt::mp(true),
-                                                   pmt::mp(false),
+                                                   pmt::PMT_F,
+                                                   pmt::PMT_T,
+                                                   pmt::PMT_F,
                                                    "Logical",
                                                    "Gen New Folder?",
                                                    RPC_PRIVLVL_MIN,
@@ -323,7 +331,7 @@ int file_sink_impl::work(int noutput_items,
         // search for burst tags
         std::vector<tag_t> burst_tags;
         if (d_burst_state == 0) {
-            get_tags_in_range(burst_tags, 0, start, end, BURST_START_KEY);
+            get_tags_in_range(burst_tags, 0, start, end, PMTCONSTSTR__sob());
             if (burst_tags.size()) {
                 // move to start of burst and increment state
                 nprocessed = burst_tags[0].offset - start;
@@ -345,7 +353,7 @@ int file_sink_impl::work(int noutput_items,
                 d_issue_start = false;
             }
 
-            get_tags_in_range(burst_tags, 0, start, end, BURST_STOP_KEY);
+            get_tags_in_range(burst_tags, 0, start, end, PMTCONSTSTR__eob());
             if (burst_tags.size() or do_stop) {
                 GR_LOG_DEBUG(d_logger,
                              "Burst stop tag received.  Stopping burst writer...\n");
@@ -413,6 +421,34 @@ bool file_sink_impl::stop()
     return true;
 } // end stop
 
+
+/**
+ * Send PDU after file close
+ *
+ */
+void file_sink_impl::send_update(
+    std::string fname, epoch_time file_time, double freq, double rate, uint64_t samples)
+{
+    // publish update
+    pmt::pmt_t dict =
+        pmt::dict_add(pmt::make_dict(), PMTCONSTSTR__fname(), pmt::intern(fname));
+    dict = pmt::dict_add(dict,
+                         PMTCONSTSTR__rx_time(),
+                         pmt::make_tuple(pmt::from_uint64(file_time.epoch_sec()),
+                                         pmt::from_double(file_time.epoch_frac())));
+    dict = pmt::dict_add(dict, PMTCONSTSTR__rx_freq(), pmt::from_double(freq));
+    dict = pmt::dict_add(dict, PMTCONSTSTR__rx_rate(), pmt::from_double(rate));
+
+    dict = pmt::dict_add(dict, PMTCONSTSTR__samples(), pmt::from_uint64(samples));
+    dict = pmt::dict_add(dict, PMTCONSTSTR__item_size(), pmt::from_uint64(d_itemsize));
+
+    // ship it
+    message_port_pub(PMTCONSTSTR__pdu(), pmt::cons(dict, pmt::init_u8vector(0, {})));
+
+    return;
+} // end send_update
+
+
 int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
                                    uint64_t starting_offset,
                                    bool& do_stop,
@@ -441,7 +477,7 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
         }
 
         // ensure tags that don't affect stream are processed first
-        if (pmt::equal(tags[tag_num].key, RATE_KEY)) {
+        if (pmt::equal(tags[tag_num].key, PMTCONSTSTR__rx_rate())) {
             d_file_writer->set_rate((int)pmt::to_double(tags[tag_num].value));
 
             // update delta
@@ -453,7 +489,7 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
 
             config_changed = true;
             change_offset = tags[tag_num].offset;
-        } else if (pmt::equal(tags[tag_num].key, FREQ_KEY)) {
+        } else if (pmt::equal(tags[tag_num].key, PMTCONSTSTR__rx_freq())) {
             d_file_writer->set_freq((uint64_t)pmt::to_double(tags[tag_num].value));
             GR_LOG_DEBUG(d_logger,
                          boost::format("Frequency set to %d Hz") %
@@ -461,7 +497,7 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
 
             config_changed = true;
             change_offset = tags[tag_num].offset;
-        } else if (pmt::equal(tags[tag_num].key, RX_TIME_KEY)) {
+        } else if (pmt::equal(tags[tag_num].key, PMTCONSTSTR__rx_time())) {
             pmt::pmt_t time_tuple = tags[tag_num].value;
             if (pmt::is_tuple(time_tuple)) {
                 d_samp_time.set(pmt::to_uint64(pmt::tuple_ref(time_tuple, 0)),

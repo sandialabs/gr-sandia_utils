@@ -1,24 +1,21 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
  * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
  * retains certain rights in this software.
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gnuradio/top_block.h>
+#include "vita/ContextPacket.h"
+#include "vita/VRTPacket.h"
+#include "vita49_tcp_msg_source_impl.h"
 #include <gnuradio/attributes.h>
 #include <gnuradio/blocks/message_debug.h>
+#include <gnuradio/sandia_utils/vita49_tcp_msg_source.h>
+#include <gnuradio/top_block.h>
 #include <pmt/pmt.h>
-#include <sandia_utils/vita49_tcp_msg_source.h>
 #include <boost/test/unit_test.hpp>
-#include "vita49_tcp_msg_source_impl.h"
-#include "vita/VRTPacket.h"
-#include "vita/ContextPacket.h"
-
-
-
 
 
 namespace gr

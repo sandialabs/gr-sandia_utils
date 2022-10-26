@@ -10,10 +10,10 @@
 #ifndef INCLUDED_SANDIA_UTILS_STREAM_GATE_IMPL_H
 #define INCLUDED_SANDIA_UTILS_STREAM_GATE_IMPL_H
 
-#include <sandia_utils/stream_gate.h>
+#include <gnuradio/sandia_utils/stream_gate.h>
 
 #include <gnuradio/io_signature.h>
-#include <sandia_utils/stream_gate.h>
+#include <gnuradio/sandia_utils/stream_gate.h>
 
 namespace gr {
 namespace sandia_utils {
@@ -25,6 +25,7 @@ protected:
     uint64_t d_dropped_samples;
     bool d_flow_data;
     bool d_consume_data;
+    int d_vlen;
 
 public:
     /**
@@ -32,8 +33,9 @@ public:
      *
      * @param flow_data - true to flow data through block
      * @param consume_data - true to consume incoming data when not flowing
+     * @param vlen - input vector length
      */
-    stream_gate_impl(bool flow_data, bool consume_data);
+    stream_gate_impl(bool flow_data, bool consume_data, int vlen = 1);
 
     /**
      * Deconstructor

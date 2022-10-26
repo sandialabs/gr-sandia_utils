@@ -12,6 +12,7 @@
 #endif
 
 #include "message_vector_raster_file_sink_impl.h"
+#include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
 #include <cstdio> /* rename */
 #include <exception>
@@ -36,10 +37,9 @@ message_vector_raster_file_sink_impl::message_vector_raster_file_sink_impl(
                 gr::io_signature::make(0, 0, 0),
                 gr::io_signature::make(0, 0, 0)),
       d_filename(filename),
+      d_file_is_new(false),
       d_total_rows(n_rows),
-      d_rows(0),
-      d_mp_name(pmt::mp("in")),
-      d_file_is_new(false)
+      d_rows(0)
 {
     // generate temporary filename
     d_filename_tmp = d_filename + ".tmp";
@@ -53,10 +53,8 @@ message_vector_raster_file_sink_impl::message_vector_raster_file_sink_impl(
     update_rate = 100; // milliseconds
 
     // register message port
-    message_port_register_in(d_mp_name);
-    set_msg_handler(
-        d_mp_name,
-        boost::bind(&message_vector_raster_file_sink_impl::handle_msg, this, _1));
+    message_port_register_in(PMTCONSTSTR__in());
+    set_msg_handler(PMTCONSTSTR__in(), [this](pmt::pmt_t msg) { this->handle_msg(msg); });
 }
 
 /*
@@ -76,7 +74,7 @@ void message_vector_raster_file_sink_impl::handle_msg(pmt::pmt_t msg)
 {
     boost::mutex::scoped_lock lock(d_mutex);
     try {
-        if (pmt::is_pair) {
+        if (pmt::is_pair(msg)) {
             pmt::pmt_t car = pmt::car(msg);
             pmt::pmt_t cdr = pmt::cdr(msg);
 

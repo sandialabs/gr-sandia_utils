@@ -1,16 +1,16 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
  * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
  * retains certain rights in this software.
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifndef INCLUDED_SANDIA_UTILS_VITA49_TCP_MSG_SOURCE_IMPL_H
 #define INCLUDED_SANDIA_UTILS_VITA49_TCP_MSG_SOURCE_IMPL_H
 
-#include <sandia_utils/vita49_tcp_msg_source.h>
+#include <gnuradio/sandia_utils/vita49_tcp_msg_source.h>
 
 #include"vita/vitarx.h"
 #include"vita/ContextPacket.h"
@@ -29,15 +29,17 @@ namespace gr
         vita_rx *rx;
         bool d_ignoreTime;
         bool d_ignoreTune;
+        bool d_socketAlwaysOn;
+        volatile bool d_running;
 
-      public:
-
+    public:
         /**
          * Constructor
          *
          * @param port - TCP port to listen on
+         * @param socket_always_on - true to always leave TCP socket open, default false
          */
-        vita49_tcp_msg_source_impl( int port );
+        vita49_tcp_msg_source_impl(int port, bool socket_always_on = false);
 
         /**
          * Deconstructor
@@ -86,8 +88,12 @@ namespace gr
          */
         virtual bool getIgnoreTune( void );
 
-      private:
+        /**
+         * Ensures TCP socket is closed
+         */
+        virtual void closeSocket(void);
 
+    private:
         /**
          * Handles VRT Data packets
          *
@@ -101,6 +107,10 @@ namespace gr
          * @param pkt - the packet to handle
          */
         void handle_context( ContextPacket *pkt );
+
+
+        void openBackend(void);
+        void closeBackend(void);
 
     }; // end class vita49_tcp_msg_source_impl
 

@@ -2,7 +2,7 @@
  * vitaheader.h
  *
  *  Created on: Jul 21, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_VITAHEADER_H_
@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 
-#include <sandia_utils/api.h>
+#include <gnuradio/sandia_utils/api.h>
 
 #include "vitabaseabs.h"
 #include "vitatypes.h"

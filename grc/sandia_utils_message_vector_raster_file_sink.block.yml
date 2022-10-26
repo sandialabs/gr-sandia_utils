@@ -17,7 +17,7 @@ inputs:
     id: in
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.message_vector_raster_file_sink(${filename}, ${n_rows})
 
 documentation: |-

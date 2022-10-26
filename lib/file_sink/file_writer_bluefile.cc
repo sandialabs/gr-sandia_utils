@@ -43,10 +43,18 @@ namespace gr {
         GR_LOG_DEBUG(d_logger,boost::format("Opening bluefile %s") % d_filename);
 
         // generate new object
-        d_writer = new bluefile::BlueFile();
+        try
+        {
+          d_writer = new bluefile::BlueFile();
+          double nopen = d_writer->open(fname,bluefile::BlueFile::WRITE);
+        }
+        catch (const std::runtime_error& error)
+        {
+          GR_LOG_WARN(d_logger,boost::format("file sink bluefile runtime error on 'open': %s") % error.what());
+          return;
+        }
 
         // open file
-        double nopen = d_writer->open(fname,bluefile::BlueFile::WRITE);
         d_initialized = true;
 
         // set file format
@@ -106,12 +114,18 @@ namespace gr {
         GR_LOG_DEBUG(d_logger,boost::format("Closing bluefile %s") % d_filename);
 
         // close the file
-        d_writer->flush();
-        d_writer->close();
-
-        // cleanup
-        delete d_writer;
-        d_writer = NULL;
+        try
+        {
+          d_writer->flush();
+          d_writer->close();
+          // cleanup
+          delete d_writer;
+          d_writer = NULL;
+        }
+        catch (const std::runtime_error& error)
+        {
+          GR_LOG_WARN(d_logger, boost::format("file sink bluefile flush and close runtime error: %s") % error.what());
+        }
 
         d_initialized = false;
       }
@@ -119,7 +133,22 @@ namespace gr {
 
     int file_writer_bluefile::write_impl( const void *in, int nitems )
     {
-      int nwritten = d_writer->write( in, d_stype, d_itemsize * nitems ) / d_itemsize;
+      if( !d_initialized )
+      {
+        GR_LOG_WARN(d_logger, "file sink bluefile: uninitialized writer, dropping data");
+        return nitems;
+      }
+
+      int nwritten = 0;
+      try
+      {
+        nwritten = d_writer->write( in, d_stype, d_itemsize * nitems ) / d_itemsize;
+      }
+      catch (const std::runtime_error& error)
+      {
+        GR_LOG_WARN(d_logger, boost::format("file sink bluefile write error: %s") % error.what());
+        nwritten = nitems;
+      }
 
       // increment counter
       d_N += nwritten;

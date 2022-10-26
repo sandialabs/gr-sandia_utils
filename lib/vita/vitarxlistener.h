@@ -2,7 +2,7 @@
  * vitarxlistener.h
  *
  *  Created on: Jul 27, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_VITARXLISTENER_H_

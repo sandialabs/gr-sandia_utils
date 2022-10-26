@@ -12,6 +12,7 @@
 #endif
 
 #include "block_buffer_impl.h"
+#include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/block_detail.h>
 #include <gnuradio/buffer.h>
 #include <gnuradio/io_signature.h>
@@ -47,7 +48,7 @@ block_buffer_impl::block_buffer_impl(size_t itemsize,
 
     d_last_abs_read_idx = 0;
     d_current_rx_time_tag.offset = 0;
-    d_current_rx_time_tag.key = PMT_RX_TIME;
+    d_current_rx_time_tag.key = PMTCONSTSTR__rx_time();
     d_current_rx_time_tag.value =
         pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0));
     d_rx_time_tags.push(d_current_rx_time_tag);
@@ -161,7 +162,8 @@ int block_buffer_impl::general_work(int noutput_items,
 
         // update current rate
         std::vector<tag_t> rate_tags;
-        get_tags_in_window(rate_tags, 0, in_idx, in_idx + to_read, PMT_RX_RATE);
+        get_tags_in_window(
+            rate_tags, 0, in_idx, in_idx + to_read, PMTCONSTSTR__rx_rate());
         if (rate_tags.size() > 0) {
             // use first tag only?
             double rate = pmt::to_double(rate_tags[0].value);
@@ -172,7 +174,8 @@ int block_buffer_impl::general_work(int noutput_items,
 
         // find overflow tags
         std::vector<tag_t> overflow_tags;
-        get_tags_in_window(overflow_tags, 0, in_idx, in_idx + to_read, PMT_OVERFLOW);
+        get_tags_in_window(
+            overflow_tags, 0, in_idx, in_idx + to_read, PMTCONSTSTR__overflow());
 
         // check for bad tags in samples we're about to read
         std::vector<tag_t> tags;
@@ -180,8 +183,8 @@ int block_buffer_impl::general_work(int noutput_items,
                            0,
                            in_idx,
                            in_idx + to_read,
-                           PMT_RX_TIME); // rx_time tag is sent on overflow, rate change,
-                                         // or frequency change
+                           PMTCONSTSTR__rx_time()); // rx_time tag is sent on overflow,
+                                                    // rate change, or frequency change
         if ((tags.size() > 0) or (overflow_tags.size() > 0)) {
 
             // keep track of all received rx_time tags for timing purposes
@@ -336,14 +339,14 @@ int block_buffer_impl::general_work(int noutput_items,
                     pmt::from_uint64(seconds), pmt::from_double(frac_seconds));
                 add_item_tag(0,
                              d_buf[d_writing].abs_write_idx,
-                             PMT_RX_TIME,
+                             PMTCONSTSTR__rx_time(),
                              d_buf[d_writing].rx_time);
             }
 
             // also insert a start of block tag
             add_item_tag(0,
                          d_buf[d_writing].abs_write_idx,
-                         PMT_BLOCK,
+                         PMTCONSTSTR__BLOCK(),
                          pmt::mp((uint64_t)numsamples_skipped));
             d_last_abs_read_idx = d_buf[d_writing].abs_read_idx;
         }

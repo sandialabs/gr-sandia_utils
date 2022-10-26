@@ -2,7 +2,7 @@
  * vitarxlistener.cpp
  *
  *  Created on: Jul 27, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include "vitarxlistener.h"

@@ -12,6 +12,7 @@
 #endif
 
 #include "compute_stats_impl.h"
+#include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
 #include <volk/volk.h>
 
@@ -30,10 +31,10 @@ compute_stats::sptr compute_stats::make()
 compute_stats_impl::compute_stats_impl()
     : gr::block("compute_stats", io_signature::make(0, 0, 0), io_signature::make(0, 0, 0))
 {
-    message_port_register_in(pmt::mp("pdu_in"));
-    set_msg_handler(pmt::mp("pdu_in"),
-                    boost::bind(&compute_stats_impl::handle_pdu, this, _1));
-    message_port_register_out(PMT_PDU_OUT);
+    message_port_register_in(PMTCONSTSTR__pdu_in());
+    set_msg_handler(PMTCONSTSTR__pdu_in(),
+                    [this](pmt::pmt_t msg) { this->handle_pdu(msg); });
+    message_port_register_out(PMTCONSTSTR__pdu_out());
 }
 
 /*
@@ -72,9 +73,9 @@ void compute_stats_impl::handle_pdu(pmt::pmt_t pdu)
 
     float power = 10 * log10(energy_sum / v_len);
 
-    meta = pmt::dict_add(meta, PMT_ENERGY, pmt::from_double(energy_sum));
-    meta = pmt::dict_add(meta, PMT_POWER, pmt::from_double(power));
-    message_port_pub(PMT_PDU_OUT, pmt::cons(meta, v_data));
+    meta = pmt::dict_add(meta, PMTCONSTSTR__energy(), pmt::from_double(energy_sum));
+    meta = pmt::dict_add(meta, PMTCONSTSTR__power(), pmt::from_double(power));
+    message_port_pub(PMTCONSTSTR__pdu_out(), pmt::cons(meta, v_data));
 }
 
 } /* namespace sandia_utils */

@@ -10,8 +10,8 @@
 #ifndef INCLUDED_SANDIA_UTILS_TAG_DEBUG_FILE_IMPL_H
 #define INCLUDED_SANDIA_UTILS_TAG_DEBUG_FILE_IMPL_H
 
+#include <gnuradio/sandia_utils/tag_debug_file.h>
 #include <gnuradio/thread/thread.h>
-#include <sandia_utils/tag_debug_file.h>
 #include <stddef.h>
 
 namespace gr {

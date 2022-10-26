@@ -12,9 +12,9 @@
 
 #include "file_source/file_reader_base.h"
 #include "file_source/file_reader_raw_header.h"
+#include <gnuradio/sandia_utils/constants.h>
+#include <gnuradio/sandia_utils/file_source.h>
 #include <gnuradio/tags.h>
-#include <sandia_utils/constants.h>
-#include <sandia_utils/file_source.h>
 #include <boost/thread/mutex.hpp>
 #include <queue>
 #include <utility>
@@ -36,8 +36,8 @@ private:
     bool d_repeat;
     bool d_force_new;
     int d_repeat_cnt;
-    bool d_first_pass;
     pmt::pmt_t d_add_begin_tag;
+    bool d_first_pass;
 
     boost::mutex fp_mutex;
 
@@ -49,9 +49,9 @@ private:
     size_t d_file_queue_depth;
 
     // add output tags
-    bool d_tag_now;
     std::vector<gr::tag_t> d_tags;
     bool d_tag_on_open;
+    bool d_tag_now;
 
     // debug stuff
     int d_method_count;

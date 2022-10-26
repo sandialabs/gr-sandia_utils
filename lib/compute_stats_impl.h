@@ -10,7 +10,7 @@
 #ifndef INCLUDED_SANDIA_UTILS_COMPUTE_STATS_IMPL_H
 #define INCLUDED_SANDIA_UTILS_COMPUTE_STATS_IMPL_H
 
-#include <sandia_utils/compute_stats.h>
+#include <gnuradio/sandia_utils/compute_stats.h>
 
 namespace gr {
 namespace sandia_utils {
@@ -18,9 +18,6 @@ namespace sandia_utils {
 class compute_stats_impl : public compute_stats
 {
 private:
-    pmt::pmt_t PMT_ENERGY = pmt::mp("energy");
-    pmt::pmt_t PMT_POWER = pmt::mp("power");
-    pmt::pmt_t PMT_PDU_OUT = pmt::mp("pdu_out");
 
 public:
     compute_stats_impl();

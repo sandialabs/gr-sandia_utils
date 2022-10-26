@@ -12,8 +12,9 @@
 
 #include "epoch_time.h"
 #include "file_sink/file_writer_base.h"
-#include <sandia_utils/constants.h>
-#include <sandia_utils/file_sink.h>
+#include <gnuradio/sandia_utils/constants.h>
+#include <gnuradio/sandia_utils/file_sink.h>
+#include <fstream>
 
 namespace gr {
 namespace sandia_utils {
@@ -110,18 +111,21 @@ public:
     bool stop();
 
     // publish updates
-    void send_update(std::string fname, epoch_time file_time, double freq, double rate)
-    {
-        // publish update
-        pmt::pmt_t dict = pmt::dict_add(pmt::make_dict(), FNAME_KEY, pmt::intern(fname));
-        dict = pmt::dict_add(dict,
-                             RX_TIME_KEY,
-                             pmt::make_tuple(pmt::from_uint64(file_time.epoch_sec()),
-                                             pmt::from_double(file_time.epoch_frac())));
-        dict = pmt::dict_add(dict, FREQ_KEY, pmt::from_double(freq));
-        dict = pmt::dict_add(dict, RATE_KEY, pmt::from_double(rate));
-        message_port_pub(PDU_KEY, pmt::cons(dict, pmt::PMT_NIL));
-    }
+    /**
+     * Send PDU update after file close
+     *
+     * @param fname - filename notifying on
+     * @param file_time - time of first sample
+     * @param freq - center frequency
+     * @param rate - sample rate
+     * @param samples - number of samples in the file
+     */
+    void send_update(std::string fname,
+                     epoch_time file_time,
+                     double freq,
+                     double rate,
+                     uint64_t samples);
+
 
     // setup rpc
     void setup_rpc();

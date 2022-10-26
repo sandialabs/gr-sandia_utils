@@ -37,7 +37,7 @@ outputs:
     dtype: ${ type }
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.block_buffer(${type.size}, ${nsamples}, ${samp_rate}, ${pass_data})
     callbacks:
     - set_nsamples(${nsamples})

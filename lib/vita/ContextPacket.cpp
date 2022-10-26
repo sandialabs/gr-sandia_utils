@@ -2,7 +2,7 @@
  * ContextPacket.cpp
  *
  *  Created on: Aug 4, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include "ContextPacket.h"
@@ -82,7 +82,7 @@ void ContextPacket::debug_print(void)
     } // end for(i
     printf("\tChange: %d\n", change);
 
-    for (int i = 0; i < values.size(); i++) {
+    for (size_t i = 0; i < values.size(); i++) {
         printf("\tCIF Value %d %lf\n", values.at(i)->getId(), values.at(i)->getValue());
     }
 
@@ -219,8 +219,8 @@ int ContextPacket::decode_cif(int idx, int bit)
 {
     int ans = 0;
     uint64_t raw;
-    double rawf;
-    int stat;
+    //double rawf;
+    //int stat;
 
     struct cif_decode_ring_type* def = NULL;
 

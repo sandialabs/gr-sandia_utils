@@ -6,7 +6,7 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-#include <sandia_utils/constants.h>
+#include <gnuradio/sandia_utils/constants.h>
 
 #include "file_reader_raw_header.h"
 
@@ -37,13 +37,13 @@ namespace gr
         epoch_time file_time( metadata[2] );
 
         gr::tag_t tag;
-        tag.key = FREQ_KEY;
+        tag.key = PMTCONSTSTR__rx_freq();
         tag.value = pmt::from_double( metadata[0] );
         d_tags.push_back( tag );
-        tag.key = RATE_KEY;
+        tag.key = PMTCONSTSTR__rate();
         tag.value = pmt::from_double( metadata[1] );
         d_tags.push_back( tag );
-        tag.key = RX_TIME_KEY;
+        tag.key = PMTCONSTSTR__rx_time();
         tag.value = pmt::make_tuple( pmt::from_uint64( file_time.epoch_sec() ),
             pmt::from_double( file_time.epoch_frac() ) );
         d_tags.push_back( tag );

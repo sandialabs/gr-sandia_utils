@@ -2,14 +2,14 @@
  * vitaclassid.h
  *
  *  Created on: Aug 11, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_VITACLASSID_H_
 #define LIB_VITA_VITACLASSID_H_
 
 #include "vitabaseabs.h"
-#include <sandia_utils/api.h>
+#include <gnuradio/sandia_utils/api.h>
 
 namespace gr {
 namespace sandia_utils {

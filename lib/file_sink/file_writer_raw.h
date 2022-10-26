@@ -10,9 +10,9 @@
 #ifndef INCLUDED_SANDIA_UTILS_FILE_WRITER_RAW_H
 #define INCLUDED_SANDIA_UTILS_FILE_WRITER_RAW_H
 
-#include <fstream>
-#include <sandia_utils/api.h>
 #include "file_writer_base.h"
+#include <gnuradio/sandia_utils/api.h>
+#include <fstream>
 
 namespace gr {
   namespace sandia_utils {

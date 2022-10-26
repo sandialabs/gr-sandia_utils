@@ -31,7 +31,7 @@ outputs:
     id: out
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.rftap_encap(${encapsulation_from}, ${custom_dlt}, ${custom_dissector_name})
 
 file_format: 1

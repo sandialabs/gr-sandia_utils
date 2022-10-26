@@ -1,0 +1,58 @@
+id: sandia_utils_tag_gate
+label: Tune Gate
+category: '[Sandia]/Sandia Utilities'
+
+templates:
+  imports: |-
+      from gnuradio import sandia_utils
+      import numpy as np
+  make: sandia_utils.tune_gate(${n_publish}, ${n_discard}, ${n_timeout}, ${samp_rate}, ${type.dtype})
+
+parameters:
+-   id: type
+    label: Data Type
+    dtype: enum
+    options: [complex, float, int, short, byte]
+    option_attributes:
+        dtype: [np.complex64, np.float32, np.int32, np.uint16, np.uint8]
+    hide: part
+-   id: n_publish
+    label: Publish Length
+    dtype: int
+    default: '1024'
+-   id: n_discard
+    label: Post-tune Discard Length
+    dtype: int
+    default: '64'
+-   id: n_timeout
+    label: Timeout Length
+    dtype: int
+    default: '32768'
+-   id: samp_rate
+    label: Sample Rate
+    dtype: int
+    default: 'samp_rate'
+    hide: part
+
+inputs:
+- label: in
+  domain: stream
+  dtype: ${ type }
+  vlen: 1
+  optional: 0
+
+outputs:
+- label: out
+  domain: stream
+  dtype: ${ type }
+  vlen: 1
+  optional: 0
+
+asserts:
+- ${ n_discard >= 0}
+- ${ n_publish >= 0}
+- ${ n_timeout > 0}
+
+#  'file_format' specifies the version of the GRC yml format used in the file
+#  and should usually not be changed.
+file_format: 1

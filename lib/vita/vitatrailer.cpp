@@ -2,7 +2,7 @@
  * vitatrailer.cpp
  *
  *  Created on: Jul 20, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include <stdio.h>
@@ -42,7 +42,7 @@ const uint8_t vita_trailer::getEnable(int idx) const
 {
     uint8_t ans = 0;
 
-    if (0 <= idx < 12) {
+    if (0 <= idx && idx < 12) {
         ans = enables[idx];
     }
 
@@ -53,7 +53,7 @@ const uint8_t vita_trailer::getIndicators(int idx) const
 {
     uint8_t ans = 0;
 
-    if (0 <= idx < 12) {
+    if (0 <= idx && idx < 12) {
         ans = indicators[idx];
     }
 

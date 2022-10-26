@@ -29,9 +29,7 @@ install(FILES
     sandia_utils_max_every_n.block.yml
     sandia_utils_message_vector_file_sink.block.yml
     sandia_utils_message_vector_raster_file_sink.block.yml
-    sandia_utils_interleaved_short_to_complex.block.yml
     sandia_utils_file_archiver.block.yml
-    sandia_utils_complex_to_interleaved_short.block.yml
     sandia_utils_csv_reader.block.yml
     sandia_utils_csv_writer.block.yml
     sandia_utils_rftap_encap.block.yml
@@ -42,5 +40,7 @@ install(FILES
     sandia_utils_tag_debug.block.yml
     sandia_utils_tagged_bits_to_bytes.block.yml
     sandia_utils_compute_stats.block.yml 
-    sandia_utils_vita49_tcp_msg_source.block.yml DESTINATION share/gnuradio/grc/blocks
+    sandia_utils_vita49_tcp_msg_source.block.yml
+    sandia_utils_message_vector_csv_pdu.block.yml
+    sandia_utils_tune_gate.block.yml DESTINATION share/gnuradio/grc/blocks
 )

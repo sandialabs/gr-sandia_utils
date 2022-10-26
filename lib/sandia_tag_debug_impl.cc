@@ -124,7 +124,7 @@ int sandia_tag_debug_impl::work(int noutput_items,
         }
 
         // copy over the tags to our local vector
-        for (int i = 0; i < temp_tags.size(); i++) {
+        for (size_t i = 0; i < temp_tags.size(); i++) {
             d_tags.push_back(temp_tags[i]);
         }
 

@@ -11,8 +11,8 @@
 #include "config.h"
 #endif
 
-#include "sandia_utils/constants.h"
 #include "tagged_bits_to_bytes_impl.h"
+#include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
 
 namespace gr {
@@ -105,7 +105,7 @@ uint16_t tagged_bits_to_bytes_impl::packbits(uint8_t* bits, uint32_t length)
         std::cout << "ERROR: cannot pack length " << length << " bits!" << std::endl;
     } else {
         packed += bits[0];
-        for (int ii = 1; ii < nbits; ii++) {
+        for (size_t ii = 1; ii < nbits; ii++) {
             packed <<= 1;
             packed += bits[ii];
         }
@@ -145,7 +145,7 @@ size_t tagged_bits_to_bytes_impl::packbuffer(const uint8_t* in,
     out.reserve(nbytes);
 
     uint8_t byte = 0;
-    for (int ii = 0; ii < data.size(); ii++) {
+    for (size_t ii = 0; ii < data.size(); ii++) {
         if (d_lsb_first) {
             // START LSB FIRST PROCESSING
             byte >>= 1;
@@ -228,7 +228,7 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
     // Time tags
     //////////////////////////////////////////////////////////
     // update the last rx_time tag if there are any in these samples
-    get_tags_in_window(d_tags, 0, rel_start, rel_offset, d_rxtime_tag);
+    get_tags_in_window(d_tags, 0, rel_start, rel_offset, PMTCONSTSTR__rx_time());
     if (d_tags.size()) {
         tag_t last_tag = d_tags.back();
         d_last_rx_time.sec = pmt::to_uint64(pmt::tuple_ref(last_tag.value, 0));
@@ -295,7 +295,7 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
         }
 
         // rx_time tags will be time-shifted to the beginning of the byte
-        if (pmt::equal(tag.key, d_rxtime_tag)) {
+        if (pmt::equal(tag.key, PMTCONSTSTR__rx_time())) {
             // read in the original time
             uint64_t int_sec = pmt::to_uint64(pmt::tuple_ref(tag.value, 0));
             double frac_sec = pmt::to_double(pmt::tuple_ref(tag.value, 1));
@@ -338,9 +338,9 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
                                                    pmt::from_double(this_time.frac));
         add_item_tag(0,
                      nitems_written(0),
-                     d_pmt_burst_time,
+                     PMTCONSTSTR__burst_time(),
                      time_pair_pmt,
-                     d_pmt_tagged_bits_block);
+                     PMTCONSTSTR__tagged_bits_block());
     } else if (added_burst_tag) {
         GR_LOG_WARN(d_logger, "Tagged byte tag added without corresponding time tag")
     }

@@ -43,7 +43,7 @@ outputs:
     vlen: ${ v_len }
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.tagged_bits_to_bytes(${key}, ${little_endian_flag}, ${stub_mode},
         ${v_len}, ${samp_rate})
     callbacks:

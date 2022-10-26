@@ -2,13 +2,13 @@
  * CifValue.h
  *
  *  Created on: Aug 6, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_CIFVALUE_H_
 #define LIB_VITA_CIFVALUE_H_
 
-#include <sandia_utils/api.h>
+#include <gnuradio/sandia_utils/api.h>
 #include <stdint.h>
 
 namespace gr {

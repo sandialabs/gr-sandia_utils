@@ -2,7 +2,7 @@
  * vitaheader.cpp
  *
  *  Created on: Jul 21, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #include "vitaheader.h"

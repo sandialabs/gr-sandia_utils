@@ -2,7 +2,7 @@
  * VRTPacket.h
  *
  *  Created on: Jul 22, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 
 #ifndef LIB_VITA_VRTPACKET_H_
@@ -15,7 +15,7 @@
 #include "vitaclassid.h"
 #include "vitaheader.h"
 #include "vitatrailer.h"
-#include <sandia_utils/api.h>
+#include <gnuradio/sandia_utils/api.h>
 
 namespace gr {
 namespace sandia_utils {
@@ -91,7 +91,7 @@ public:
     /**
      * Returns pointer to payload vectory
      *
-     * @return *vector<uint32_t>
+     * @return *vector\<uint32_t\>
      */
     std::vector<uint32_t>* getPayload(void);
 

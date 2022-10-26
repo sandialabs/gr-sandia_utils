@@ -57,7 +57,7 @@ asserts:
 - ${ vlen > 0 }
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: sandia_utils.tag_debug_file(${type.size}*${vlen}, ${name}, ${filter}, ${filename});
         self.${id}.set_display(${display}); self.${id}.set_filewrite(${filewrite},
         True)

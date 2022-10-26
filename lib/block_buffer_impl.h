@@ -10,7 +10,7 @@
 #ifndef INCLUDED_SANDIA_UTILS_BLOCK_BUFFER_IMPL_H
 #define INCLUDED_SANDIA_UTILS_BLOCK_BUFFER_IMPL_H
 
-#include <sandia_utils/block_buffer.h>
+#include <gnuradio/sandia_utils/block_buffer.h>
 #include <mutex> // std::mutex
 #include <queue> // std::queue
 
@@ -66,11 +66,6 @@ private:
     std::mutex work_mutex;
 
     void init_buffers(uint64_t nsamples);
-
-    const pmt::pmt_t PMT_RX_RATE = pmt::mp("rx_rate");
-    const pmt::pmt_t PMT_RX_TIME = pmt::mp("rx_time");
-    const pmt::pmt_t PMT_OVERFLOW = pmt::mp("overflow");
-    const pmt::pmt_t PMT_BLOCK = pmt::mp("BLOCK");
 
 public:
     block_buffer_impl(size_t itemsize,

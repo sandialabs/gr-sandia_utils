@@ -10,7 +10,7 @@
 #ifndef INCLUDED_SANDIA_UTILS_INVERT_TUNE_IMPL_H
 #define INCLUDED_SANDIA_UTILS_INVERT_TUNE_IMPL_H
 
-#include <sandia_utils/invert_tune.h>
+#include <gnuradio/sandia_utils/invert_tune.h>
 
 namespace gr {
 namespace sandia_utils {
@@ -23,8 +23,6 @@ private:
     uint64_t d_n_pdu;
     uint64_t d_n_ops;
 
-    pmt::pmt_t d_mp_name;
-    pmt::pmt_t d_freq_key;
 
 public:
     invert_tune_impl();

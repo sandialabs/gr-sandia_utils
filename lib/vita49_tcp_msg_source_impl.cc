@@ -1,9 +1,9 @@
 /* -*- c++ -*- */
-/* 
+/*
  * Copyright 2018, 2019, 2020 National Technology & Engineering Solutions of Sandia, LLC
  * (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. Government
  * retains certain rights in this software.
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -11,34 +11,44 @@
 #include "config.h"
 #endif
 
-#include <endian.h>
-#include <arpa/inet.h>
-#include <gnuradio/io_signature.h>
 #include "vita49_tcp_msg_source_impl.h"
-#include <sandia_utils/constants.h>
+#include <gnuradio/io_signature.h>
+#include <gnuradio/sandia_utils/constants.h>
+#include <arpa/inet.h>
+#include <endian.h>
 
 namespace gr
 {
   namespace sandia_utils
   {
 
-    vita49_tcp_msg_source::sptr vita49_tcp_msg_source::make( int port )
-    {
-      return gnuradio::get_initial_sptr( new vita49_tcp_msg_source_impl( port ) );
+  vita49_tcp_msg_source::sptr vita49_tcp_msg_source::make(int port, bool socket_always_on)
+  {
+      return gnuradio::get_initial_sptr(
+          new vita49_tcp_msg_source_impl(port, socket_always_on));
     }
 
     /*
      * The private constructor
      */
-    vita49_tcp_msg_source_impl::vita49_tcp_msg_source_impl( int port ) : gr::block( "vita49_tcp_msg_source",
-        gr::io_signature::make( 0, 0, 0 ), gr::io_signature::make( 0, 0, 0 ) )
+    vita49_tcp_msg_source_impl::vita49_tcp_msg_source_impl(int port,
+                                                           bool socket_always_on)
+        : gr::block("vita49_tcp_msg_source",
+                    gr::io_signature::make(0, 0, 0),
+                    gr::io_signature::make(0, 0, 0))
     {
-      int stat;
+      //int stat;
 
+      d_socketAlwaysOn = socket_always_on;
+      d_running = false;
       d_ignoreTime = false;
       d_ignoreTune = false;
       rx = new vita_rx( port );
       rx->add_listener( this );
+
+      if (d_socketAlwaysOn) {
+          openBackend();
+      }
 
       /**
       stat = rx->start();
@@ -48,8 +58,8 @@ namespace gr
       }
       */
 
-      message_port_register_out( OUT_KEY );
-      message_port_register_out( TUNE_KEY );
+      message_port_register_out(PMTCONSTSTR__out());
+      message_port_register_out(PMTCONSTSTR__tune());
 
       return;
     } //end constructor
@@ -59,22 +69,21 @@ namespace gr
      */
     vita49_tcp_msg_source_impl::~vita49_tcp_msg_source_impl()
     {
-      rx->stop();
+        closeSocket();
 
-      return;
+        return;
     } //end deconstructor
 
 
     bool vita49_tcp_msg_source_impl::start( void )
     {
-      int stat;
 
       GR_LOG_INFO( d_logger, "vita49_tcp_msg_source_impl::start()");
 
-      stat = rx->start();
-      if( stat != 1 )
-      {
-        GR_LOG_WARN(d_logger, "Error starting vita_rx component");
+      d_running = true;
+
+      if (!d_socketAlwaysOn) {
+          openBackend();
       }
 
       return true;
@@ -82,14 +91,12 @@ namespace gr
 
     bool vita49_tcp_msg_source_impl::stop( void )
     {
-      int stat;
+        d_running = false;
 
-      GR_LOG_INFO( d_logger, "vita49_tcp_msg_source_impl::stop()");
+        GR_LOG_INFO(d_logger, "vita49_tcp_msg_source_impl::stop()");
 
-      stat = rx->stop();
-      if( stat != 1 )
-      {
-        GR_LOG_WARN(d_logger, "Error stopping vita_rx component");
+        if (!d_socketAlwaysOn) {
+            closeBackend();
       }
 
       return true;
@@ -103,28 +110,28 @@ namespace gr
      */
     void vita49_tcp_msg_source_impl::received_packet( PacketType type, VRTPacket *pkt )
     {
-      switch ( type )
-      {
-        case PacketType::SIGNAL_DATA:
-        case PacketType::SIGNAL_DATA_ID:
-        {
-          handle_data( pkt );
-          break;
+        if (d_running) {
+            switch (type) {
+            case PacketType::SIGNAL_DATA:
+            case PacketType::SIGNAL_DATA_ID: {
+                handle_data(pkt);
+                break;
+            }
+            case PacketType::CONTEXT: {
+                handle_context((ContextPacket*)pkt);
+                break;
+            }
+            default: {
+                // drop it
+                GR_LOG_DEBUG(d_logger, "Dropping unhandled packet type");
+                break;
+            }
+            } // end switch
+        } else {
+            GR_LOG_DEBUG(d_logger, "GR Block not running, Dropping packet");
         }
-        case PacketType::CONTEXT:
-        {
-          handle_context( (ContextPacket*)pkt );
-          break;
-        }
-        default:
-        {
-          //drop it
-          GR_LOG_DEBUG( d_logger, "Dropping unhandled packet type");
-          break;
-        }
-      } //end switch
 
-      return;
+        return;
     } //end received_packet
 
     /**
@@ -170,6 +177,16 @@ namespace gr
     }
 
     /**
+     * Ensures TCP socket is closed
+     */
+    void vita49_tcp_msg_source_impl::closeSocket(void)
+    {
+        closeBackend();
+
+        return;
+    } // end closeSocket
+
+    /**
      * Handles VRT Data packets
      *
      * @param pkt - the packet to handle
@@ -187,7 +204,7 @@ namespace gr
       uint32_t raw;
 
       //printf("VRT had %d word\n", pkt->getPayload()->size() );
-      for(int i = 0; i < pkt->getPayload()->size(); i++ )
+      for(size_t i = 0; i < pkt->getPayload()->size(); i++ )
       {
         raw = pkt->getPayload()->at( i );
         //raw = be32toh( raw );
@@ -212,11 +229,11 @@ namespace gr
         if( !d_ignoreTime )
         {
           pmt::pmt_t time_tag = pmt::make_tuple(pmt::from_uint64( pkt->getTsEpoch() ), pmt::from_double( pkt->getTsFrac() * 1e-12));
-          metadata = pmt::dict_add( metadata, TX_TIME_KEY, time_tag );
+          metadata = pmt::dict_add(metadata, PMTCONSTSTR__tx_time(), time_tag);
         }
 
         // ship it!
-        message_port_pub( OUT_KEY, pmt::cons( metadata, data_vec ) );
+        message_port_pub(PMTCONSTSTR__out(), pmt::cons(metadata, data_vec));
         //printf("VITA49 - Published PDU\n");
       }
 
@@ -236,8 +253,8 @@ namespace gr
       if( !d_ignoreTime )
       {
         pmt::pmt_t time_tag = pmt::make_tuple(pmt::from_uint64( pkt->getTsEpoch() ), pmt::from_double( pkt->getTsFrac() * 1e-12));
-        metadata = pmt::dict_add( metadata, TIME_KEY, time_tag );
-        metadata = pmt::dict_add( metadata, CMD_DIRECTION, CMD_TX );
+        metadata = pmt::dict_add(metadata, PMTCONSTSTR__time(), time_tag);
+        metadata = pmt::dict_add(metadata, PMTCONSTSTR__direction(), PMTCONSTSTR__TX());
       }
 
       for( CifValue *cf : *pkt->getValues() )
@@ -247,7 +264,8 @@ namespace gr
           case (29):
           {
             //bandwidth
-            metadata = pmt::dict_add( metadata, CMD_BW_KEY, pmt::from_double(cf->getValue()) );
+            metadata = pmt::dict_add(
+                metadata, PMTCONSTSTR__bandwidth(), pmt::from_double(cf->getValue()));
             break;
           }
           case (28):
@@ -258,13 +276,15 @@ namespace gr
           case (27):
           {
             //RF Ref
-            metadata = pmt::dict_add( metadata, CMD_LO_FREQ_KEY, pmt::from_double(cf->getValue()) );
+            metadata = pmt::dict_add(
+                metadata, PMTCONSTSTR__lo_freq(), pmt::from_double(cf->getValue()));
             break;
           }
           case (21):
           {
             //Sample Rate
-            metadata = pmt::dict_add( metadata, CMD_RATE_KEY, pmt::from_double(cf->getValue()) );
+            metadata = pmt::dict_add(
+                metadata, PMTCONSTSTR__rate(), pmt::from_double(cf->getValue()));
             break;
           }
 
@@ -275,11 +295,39 @@ namespace gr
 
       if( !d_ignoreTune )
       {
-        message_port_pub( TUNE_KEY, pmt::cons( metadata, data_vec ) );
-        //printf("VITA49 - Published Command PDU\n");
+          message_port_pub(PMTCONSTSTR__tune(), pmt::cons(metadata, data_vec));
+          // printf("VITA49 - Published Command PDU\n");
       }
 
       return;
+    }
+
+    void vita49_tcp_msg_source_impl::openBackend(void)
+    {
+        int stat;
+
+        GR_LOG_INFO(d_logger, "openBackend");
+
+        stat = rx->start();
+        if (stat != 1) {
+            GR_LOG_WARN(d_logger, "Error starting vita_rx component");
+        }
+
+        return;
+    }
+
+    void vita49_tcp_msg_source_impl::closeBackend(void)
+    {
+        int stat;
+
+        GR_LOG_INFO(d_logger, "closeBackend");
+
+        stat = rx->stop();
+        if (stat != 1) {
+            GR_LOG_WARN(d_logger, "Error stopping vita_rx component");
+        }
+
+        return;
     }
 
   } /* namespace sandia_utils */

@@ -10,18 +10,18 @@
 #ifndef INCLUDED_SANDIA_UTILS_FILE_READER_BASE_H
 #define INCLUDED_SANDIA_UTILS_FILE_READER_BASE_H
 
-#include <string>
-#include <stdint.h>           /* uint64_t */
+#include "../epoch_time.h"
+#include <gnuradio/logger.h>
+#include <gnuradio/sandia_utils/api.h>
+#include <gnuradio/tags.h>
+#include <pmt/pmt.h>
+#include <stdint.h> /* uint64_t */
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <sandia_utils/api.h>
-#include <pmt/pmt.h>
-#include <gnuradio/logger.h>
-#include <gnuradio/tags.h>
-#include "../epoch_time.h"
+#include <string>
 
 // win32 (mingw/msvc) specific
 #ifdef HAVE_IO_H
@@ -54,6 +54,9 @@ namespace gr
         // itemsize in bytes
         size_t d_itemsize;
 
+        // logger
+        gr::logger_ptr d_logger;
+
         // file status
         bool d_is_open;
         std::string d_filename;
@@ -62,9 +65,6 @@ namespace gr
 
         // metadata tags
         std::vector<gr::tag_t> d_tags;
-
-        // logger
-        gr::logger_ptr d_logger;
 
       public:
         typedef boost::shared_ptr<file_reader_base> sptr;

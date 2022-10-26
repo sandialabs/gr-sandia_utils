@@ -25,7 +25,7 @@ parameters:
     options: ['''uint8''', '''int8''', '''uint16''', '''int16''', '''uint32''', '''int32''',
         '''float''', '''complex float''', '''double''', '''complex double''']
     option_labels: [Unsigned 8-bit Integer, Signed 8-bit Integer, Unsigned 16-bit
-            Integer, Signed 8-bit Integer, Unsigned 32-bit Integer, Signed 32-bit
+            Integer, Signed 16-bit Integer, Unsigned 32-bit Integer, Signed 32-bit
             Integer, Single Precision (Float), Complex Single Precision (Complex Float),
         Double Precision (Double), Complex Double Precision (Complex Double)]
     option_attributes:
@@ -42,7 +42,7 @@ inputs:
     id: in
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: "sandia_utils.csv_writer(${file}, ${add_metadata}, ${metadata_format},\n
     ${data_type},${precision})"
 

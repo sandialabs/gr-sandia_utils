@@ -24,11 +24,9 @@ namespace gr {
     /*
      * The public constructor
      */
-    file_reader_base::file_reader_base(size_t itemsize, gr::logger_ptr logger)
-      : d_itemsize(itemsize),
-        d_logger(logger),
-        d_is_open(false)
-    {
+  file_reader_base::file_reader_base(size_t itemsize, gr::logger_ptr logger)
+      : d_itemsize(itemsize), d_logger(logger), d_is_open(false), d_fp(NULL)
+  {
       d_tags.resize(0);
     }
 
@@ -88,7 +86,11 @@ namespace gr {
      */
     bool file_reader_base::seek(long seek_point, int whence)
     {
-      return fseek((FILE*)d_fp, seek_point *d_itemsize, whence) == 0;
+        // no need to seek if not defined
+        if (not d_fp)
+            return true;
+
+        return fseek((FILE*)d_fp, seek_point * d_itemsize, whence) == 0;
     }
 
     /**

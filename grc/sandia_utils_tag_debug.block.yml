@@ -53,7 +53,7 @@ asserts:
 - ${ vlen > 0 }
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: |-
         sandia_utils.sandia_tag_debug(${type.size}*${vlen}, ${name}, ${filter}, ${store})
         self.${id}.set_display(${display})

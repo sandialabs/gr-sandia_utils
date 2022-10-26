@@ -3,7 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: gr-sandia_utils
+Name: gnuradio-sandia_utils
 Description: GNURadio OOT with assorted functions
 Requires: gnuradio-runtime
 Version: @LIBVER@

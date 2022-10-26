@@ -12,6 +12,7 @@
 #endif
 
 #include "message_vector_file_sink_impl.h"
+#include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
 #include <cstdio> /* rename */
 #include <exception>
@@ -20,28 +21,26 @@
 namespace gr {
 namespace sandia_utils {
 
-message_vector_file_sink::sptr message_vector_file_sink::make(std::string filename)
+message_vector_file_sink::sptr message_vector_file_sink::make(std::string filename,
+                                                              bool append)
 {
-    return gnuradio::get_initial_sptr(new message_vector_file_sink_impl(filename));
+    return gnuradio::get_initial_sptr(
+        new message_vector_file_sink_impl(filename, append));
 }
 
 /*
  * The private constructor
  */
-message_vector_file_sink_impl::message_vector_file_sink_impl(std::string filename)
+message_vector_file_sink_impl::message_vector_file_sink_impl(std::string filename,
+                                                             bool append)
     : gr::block("message_vector_file_sink",
                 gr::io_signature::make(0, 0, 0),
                 gr::io_signature::make(0, 0, 0)),
       d_filename(filename),
-      d_mp_name(pmt::mp("in")),
-      d_file_is_new(false)
+      d_append(append)
 {
-    // generate temporary filename
-    d_filename_tmp = d_filename + ".tmp";
-
-    message_port_register_in(d_mp_name);
-    set_msg_handler(d_mp_name,
-                    boost::bind(&message_vector_file_sink_impl::handle_msg, this, _1));
+    message_port_register_in(PMTCONSTSTR__in());
+    set_msg_handler(PMTCONSTSTR__in(), [this](pmt::pmt_t msg) { this->handle_msg(msg); });
 }
 
 /*
@@ -49,30 +48,49 @@ message_vector_file_sink_impl::message_vector_file_sink_impl(std::string filenam
  */
 message_vector_file_sink_impl::~message_vector_file_sink_impl() {}
 
+bool message_vector_file_sink_impl::start()
+{
+    // open output file only once if appending incoming data
+    if (d_append) {
+        d_fid.open(d_filename, std::ios::out | std::ios::binary);
+    }
+
+    return true;
+}
+
+bool message_vector_file_sink_impl::stop()
+{
+    // close output file if open
+    if (d_fid.is_open()) {
+        d_fid.close();
+    }
+
+    return true;
+}
+
 void message_vector_file_sink_impl::handle_msg(pmt::pmt_t msg)
 {
     boost::mutex::scoped_lock lock(d_mutex);
     try {
-        if (pmt::is_pair) {
+        if (pmt::is_pdu(msg)) {
             pmt::pmt_t car = pmt::car(msg);
             pmt::pmt_t cdr = pmt::cdr(msg);
 
-            if (pmt::is_uniform_vector(cdr)) {
-                size_t nbytes;
-                void* p = pmt::uniform_vector_writable_elements(cdr, nbytes);
+            // extract uniform data
+            size_t nbytes;
+            void* p = pmt::uniform_vector_writable_elements(cdr, nbytes);
 
-                // write to file
-                std::ofstream f(d_filename_tmp, std::ios::out | std::ios::binary);
-                if (f.is_open()) {
-                    f.write((const char*)p, nbytes);
-                    f.close();
-                }
-
-                // move file
-                rename(d_filename_tmp.c_str(), d_filename.c_str());
-
-                // signal a file is new
-                d_file_is_new = true;
+            if (not d_append) {
+                // open output file anew so it is written over
+                d_fid.open(d_filename, std::ios::out | std::ios::binary);
+                d_fid.write((const char*)p, nbytes);
+                d_fid.close();
+            } else {
+                // write number of samples and then data
+                uint32_t nsamples =
+                    (uint32_t)(nbytes / pmt::uniform_vector_itemsize(cdr));
+                d_fid.write((const char*)&nsamples, sizeof(uint32_t));
+                d_fid.write((const char*)p, nbytes);
             }
         }
     } catch (const std::exception& e) {
@@ -82,16 +100,5 @@ void message_vector_file_sink_impl::handle_msg(pmt::pmt_t msg)
     return;
 }
 
-std::string message_vector_file_sink_impl::get_filename()
-{
-    boost::mutex::scoped_lock lock(d_mutex);
-
-    if (d_file_is_new) {
-        d_file_is_new = false;
-        return d_filename;
-    } else {
-        return "";
-    }
-}
 } /* namespace sandia_utils */
 } /* namespace gr */

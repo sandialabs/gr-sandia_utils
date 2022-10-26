@@ -118,21 +118,19 @@ namespace gr {
 
         // initialize logger - use stdout if not specified
         if (logger == NULL) {
-            d_logger = gr::logger_ptr(&std::cout);
-      }
-      else
-      {
-        d_logger = logger;
-      }
+            d_logger = gr::logger_ptr(new gr::logger("file_writer"));
+            // d_logger = gr::logger_ptr(&std::cout);
+        } else {
+            d_logger = logger;
+        }
 
-      // set number of samples
-      set_nsamples( nsamples );
+        // set number of samples
+        set_nsamples(nsamples);
 
-      // set flag
-      d_is_started = false;
+        // set flag
+        d_is_started = false;
 
-
-      return;
+        return;
     } //end constructor
 
     /**
@@ -183,7 +181,7 @@ namespace gr {
 
       // signal for update to be sent only if data has been written
       if (d_nwritten) {
-        d_callback(d_filename,d_samp_time,double(d_freq),double(d_rate));
+          d_callback(d_filename, d_samp_time, double(d_freq), double(d_rate), d_nwritten);
       }
 
       // clear file currently being written

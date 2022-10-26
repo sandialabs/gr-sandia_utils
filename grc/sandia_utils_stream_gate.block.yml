@@ -14,6 +14,11 @@ parameters:
         input: [complex, float, int, short, byte]
         output: [complex, float, int, short, byte]
     hide: part
+-   id: vlen
+    label: Vec Length
+    dtype: int
+    default: 1
+    hide: ${ 'part' if vlen == 1 else 'none' }
 -   id: flow_data
     label: Flow Data?
     dtype: bool
@@ -30,14 +35,19 @@ parameters:
 inputs:
 -   domain: stream
     dtype: ${ type.output }
+    vlen: ${ vlen }
 
 outputs:
 -   domain: stream
     dtype: ${ type.input }
+    vlen: ${ vlen }
+
+asserts:
+- ${ vlen > 0 }
 
 templates:
-    imports: import sandia_utils
-    make: sandia_utils.stream_gate_${type}(${flow_data},${consume_data})
+    imports: from gnuradio import sandia_utils
+    make: sandia_utils.stream_gate_${type}(${flow_data},${consume_data}, ${vlen})
     callbacks:
     - set_flow_data(${flow_data})
     - set_consume_data(${consume_data})

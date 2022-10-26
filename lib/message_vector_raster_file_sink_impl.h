@@ -10,8 +10,8 @@
 #ifndef INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_RASTER_FILE_SINK_IMPL_H
 #define INCLUDED_SANDIA_UTILS_MESSAGE_VECTOR_RASTER_FILE_SINK_IMPL_H
 
+#include <gnuradio/sandia_utils/message_vector_raster_file_sink.h>
 #include <pmt/pmt.h>
-#include <sandia_utils/message_vector_raster_file_sink.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
@@ -23,23 +23,22 @@ namespace sandia_utils {
 class message_vector_raster_file_sink_impl : public message_vector_raster_file_sink
 {
 private:
-    pmt::pmt_t d_mp_name;
 
     // file variables
     std::string d_filename;
     std::string d_filename_tmp;
     bool d_file_is_new;
 
+    // buffer to store rows
+    std::vector<uint8_t> d_buffer;
+    uint16_t d_total_rows;
+    uint16_t d_rows;
+
     // time
     boost::posix_time::ptime t1;
     boost::posix_time::ptime t2;
     boost::posix_time::time_duration diff;
     int update_rate;
-
-    // buffer to store rows
-    std::vector<uint8_t> d_buffer;
-    uint16_t d_rows;
-    uint16_t d_total_rows;
 
     // protection mutex
     boost::mutex d_mutex;

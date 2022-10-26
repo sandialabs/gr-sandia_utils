@@ -10,7 +10,7 @@
 #ifndef INCLUDED_SANDIA_UTILS_TAGGED_BITS_TO_BYTES_IMPL_H
 #define INCLUDED_SANDIA_UTILS_TAGGED_BITS_TO_BYTES_IMPL_H
 
-#include <sandia_utils/tagged_bits_to_bytes.h>
+#include <gnuradio/sandia_utils/tagged_bits_to_bytes.h>
 
 namespace gr {
 namespace sandia_utils {
@@ -30,10 +30,6 @@ private:
     double d_sample_rate;
     size_t d_itemsize;
     int d_extra_bits;
-
-    pmt::pmt_t d_rxtime_tag = pmt::intern("rx_time");
-    pmt::pmt_t d_pmt_burst_time = pmt::intern("burst_time");
-    pmt::pmt_t d_pmt_tagged_bits_block = pmt::intern("tagged_bits_block");
 
     time_pair d_last_rx_time;
     uint64_t d_last_rx_time_offset;

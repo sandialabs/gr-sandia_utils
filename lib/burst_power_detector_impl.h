@@ -12,8 +12,8 @@
 #define INCLUDED_SANDIA_UTILS_BURST_POWER_DETECTOR_IMPL_H
 
 #include <gnuradio/filter/fft_filter.h>
+#include <gnuradio/sandia_utils/burst_power_detector.h>
 #include <gnuradio/tags.h>
-#include <sandia_utils/burst_power_detector.h>
 #include <volk/volk.h>
 
 using namespace gr::filter;
@@ -25,9 +25,9 @@ class burst_power_detector_impl : public burst_power_detector
 {
 private:
     int d_naverage;
+    int d_holdoff;
     int d_nguard;
     double d_threshold;
-    int d_holdoff;
     int d_block_size;
     uint64_t d_index;
     int d_state;

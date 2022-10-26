@@ -199,8 +199,8 @@ void burst_power_detector_impl::detect(uint64_t dindex, float* data)
     pmt::pmt_t key, value;
 
 
-    float d_val;
-    int ii = 0;
+    //float d_val;
+    //int ii = 0;
     for (int ii = 0; ii < d_block_size; ++ii) {
         // brute force for now - need to find faster implementation
         if (d_state == 0) {

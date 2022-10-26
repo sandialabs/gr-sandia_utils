@@ -19,19 +19,22 @@ namespace gr {
 namespace sandia_utils {
 
 template <class T>
-typename stream_gate<T>::sptr stream_gate<T>::make(bool flow_data, bool consume_data)
+typename stream_gate<T>::sptr
+stream_gate<T>::make(bool flow_data, bool consume_data, int vlen)
 {
-    return gnuradio::get_initial_sptr(new stream_gate_impl<T>(flow_data, consume_data));
+    return gnuradio::get_initial_sptr(
+        new stream_gate_impl<T>(flow_data, consume_data, vlen));
 }
 
 template <class T>
-stream_gate_impl<T>::stream_gate_impl(bool flow_data, bool consume_data)
+stream_gate_impl<T>::stream_gate_impl(bool flow_data, bool consume_data, int vlen)
     : gr::block("stream_gate",
-                io_signature::make(1, 1, sizeof(T)),
-                io_signature::make(1, 1, sizeof(T))),
+                io_signature::make(1, 1, sizeof(T) * vlen),
+                io_signature::make(1, 1, sizeof(T) * vlen)),
       d_dropped_samples(0),
       d_flow_data(flow_data),
-      d_consume_data(consume_data)
+      d_consume_data(consume_data),
+      d_vlen(vlen)
 {
     // tags are manually propagated to account for dropped data
     this->set_tag_propagation_policy(gr::block::TPP_DONT);
@@ -103,7 +106,7 @@ int stream_gate_impl<T>::general_work(int noutput_items,
         }
 
         // copy data to output and update scheduler
-        memcpy(out, in, sizeof(T) * noutput_items);
+        memcpy(out, in, sizeof(T) * noutput_items * d_vlen);
         this->produce(0, noutput_items);
         this->consume_each(noutput_items);
 

@@ -2,7 +2,7 @@
  * CifValue.cpp
  *
  *  Created on: Aug 6, 2020
- *      Author: rfec
+ *      Author: sandia
  */
 #include "CifValue.h"
 #include <stdio.h>

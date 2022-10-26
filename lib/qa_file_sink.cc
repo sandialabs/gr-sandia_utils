@@ -5,12 +5,13 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-#include "sandia_utils/constants.h"
-#include "sandia_utils/file_sink.h"
-#include "sandia_utils/file_source.h"
+#include "gnuradio/sandia_utils/constants.h"
+#include "gnuradio/sandia_utils/file_sink.h"
+#include "gnuradio/sandia_utils/file_source.h"
 #include <gnuradio/block_detail.h>
 #include <gnuradio/blocks/message_debug.h>
 #include <gnuradio/blocks/null_source.h>
+#include <gnuradio/blocks/tag_debug.h>
 #include <gnuradio/blocks/throttle.h>
 #include <gnuradio/blocks/vector_source.h>
 #include <gnuradio/buffer.h>
@@ -35,15 +36,99 @@ bool remove_file(std::string fname)
     return false;
 }
 
-gr::tag_t gen_tag(pmt::pmt_t key, pmt::pmt_t value, uint64_t offset)
+class streaming_interface
 {
-    gr::tag_t tag;
-    tag.key = key;
-    tag.value = value;
-    tag.offset = offset;
+    // simulate a streaming interface by allowing for an exact number
+    // of samples and tags to be "pushed" to a block through the
+    // work function
+public:
+    streaming_interface(gr::sandia_utils::file_sink::sptr sink) : d_sink(sink)
+    {
 
-    return tag;
-}
+        // instantiate blocks
+        d_source = gr::sandia_utils::file_source::make(
+            sizeof(gr_complex) * 1, "", "raw", false, false);
+        d_source->set_begin_tag(pmt::PMT_NIL);
+        d_source->add_file_tags(false);
+        d_source->set_file_queue_depth(1);
+        d_debug = gr::blocks::message_debug::make();
+
+        // create top block
+        // start and stop immediately so all buffers can be initialized properly
+        // but the work function is not called when the input buffer is updated
+        // Note: There may be a better way to do this
+        d_tb = gr::make_top_block("test");
+        d_tb->connect(d_source, 0, d_sink, 0);
+        d_tb->msg_connect(d_sink, "pdu", d_debug, "store");
+        d_tb->start();
+        d_tb->stop();
+        d_tb->wait();
+
+        // get buffer pointers
+        d_inbuf = d_source->detail()->output(0);
+        d_reader = sink->detail()->input(0);
+
+        // vector pointers for input and output
+        d_input_items = gr_vector_const_void_star(1);
+        d_output_items = gr_vector_void_star(1);
+    }
+
+    // public destructor
+    ~streaming_interface() {}
+
+    // stop simulator
+    bool stop() { return d_sink->stop(); }
+
+    // add tag to input stream
+    void add_tag(pmt::pmt_t key, pmt::pmt_t value, uint64_t offset)
+    {
+        gr::tag_t tag;
+        tag.key = key;
+        tag.value = value;
+        tag.offset = offset;
+        d_inbuf->add_item_tag(tag);
+    }
+
+    int push(int n, bool do_write = true)
+    {
+        // update buffer with "data"
+        if (do_write)
+            d_inbuf->update_write_pointer(n);
+
+        // call work function
+        d_input_items[0] = d_reader->read_pointer();
+        d_output_items[0] = NULL; // no output for block
+        int noutput_items = d_sink->work(n, d_input_items, d_output_items);
+        d_reader->update_read_pointer(noutput_items);
+
+        return noutput_items;
+    }
+
+    std::vector<pmt::pmt_t> messages()
+    {
+        // get messages
+        std::vector<pmt::pmt_t> messages;
+        pmt::pmt_t head = d_debug->delete_head_nowait(pmt::intern("store"));
+        while (head != pmt::pmt_t()) {
+            messages.push_back(head);
+            head = d_debug->delete_head_nowait(pmt::intern("store"));
+        }
+        return messages;
+    }
+
+private:
+    // blocks
+    gr::sandia_utils::file_source::sptr d_source;
+    gr::sandia_utils::file_sink::sptr d_sink;
+    gr::blocks::message_debug::sptr d_debug;
+    gr::top_block_sptr d_tb;
+
+    // objects
+    gr::buffer_sptr d_inbuf;
+    gr::buffer_reader_sptr d_reader;
+    gr_vector_const_void_star d_input_items;
+    gr_vector_void_star d_output_items;
+};
 
 // test instantiation of all file data types
 BOOST_AUTO_TEST_CASE(t0)
@@ -174,8 +259,7 @@ BOOST_AUTO_TEST_CASE(t1)
 // test streaming to a single file
 BOOST_AUTO_TEST_CASE(t2)
 {
-    // generate blocks
-    gr::block_sptr src(gr::blocks::null_source::make(sizeof(gr_complex)));
+    // setup sink to generate a single file
     gr::sandia_utils::file_sink::sptr sink(
         gr::sandia_utils::file_sink::make("complex",
                                           sizeof(gr_complex),
@@ -185,36 +269,40 @@ BOOST_AUTO_TEST_CASE(t2)
                                           1000,
                                           "/tmp",
                                           "test.fc32"));
-    gr::blocks::message_debug::sptr debug(gr::blocks::message_debug::make());
-    gr::block_sptr throttle(gr::blocks::throttle::make(sizeof(gr_complex), 32e3, true));
-
     // set sink to start recording
     sink->set_second_align(false);
     sink->set_gen_new_folder(false);
     sink->set_recording(true);
 
-    gr::top_block_sptr tb(gr::make_top_block("t2"));
-    tb->connect(src, 0, throttle, 0);
-    tb->connect(throttle, 0, sink, 0);
-    tb->msg_connect(sink, "pdu", debug, "store");
-    tb->msg_connect(sink, "pdu", debug, "print");
-    tb->start();
+    // streaming interface simulator
+    streaming_interface sim(sink);
 
-    // let it run for sometime
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+    // "push" data to sink
+    int noutput_items = sim.push(4000);
+    BOOST_REQUIRE_EQUAL(4000, noutput_items);
 
     // stop recording
-    sink->set_recording(false);
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+    sim.stop();
 
-    // stop
-    tb->stop();
-    tb->wait();
+    // collect messages
+    std::vector<pmt::pmt_t> messages = sim.messages();
+    BOOST_REQUIRE_EQUAL(1, messages.size());
 
-    // collect results
-    BOOST_REQUIRE_EQUAL(debug->num_messages(), 1);
-    pmt::pmt_t message = debug->get_message(0);
-    BOOST_REQUIRE_EQUAL(true, true);
+    // expected pmt
+    BOOST_REQUIRE(pmt::is_pdu(messages[0]));
+    pmt::pmt_t meta = pmt::car(messages[0]);
+    BOOST_REQUIRE(pmt::equal(pmt::from_double(1000),
+                             pmt::dict_ref(meta, PMTCONSTSTR__rx_rate(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::from_double(0),
+                             pmt::dict_ref(meta, PMTCONSTSTR__rx_freq(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::intern("/tmp/test.fc32"),
+                             pmt::dict_ref(meta, PMTCONSTSTR__fname(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(
+        pmt::equal(pmt::from_uint64(8),
+                   pmt::dict_ref(meta, PMTCONSTSTR__item_size(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::from_uint64(4000),
+                             pmt::dict_ref(meta, PMTCONSTSTR__samples(), pmt::PMT_NIL)));
+
 
     // clean up
     remove_file("/tmp/test.fc32");
@@ -223,19 +311,7 @@ BOOST_AUTO_TEST_CASE(t2)
 // test tag name generation
 BOOST_AUTO_TEST_CASE(t3)
 {
-    // use a vector source block to place tags in the stream
-    std::vector<gr::tag_t> tags;
-    tags.push_back(gen_tag(gr::sandia_utils::RATE_KEY, pmt::from_double(30.72e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::FREQ_KEY, pmt::from_double(915e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
-                           pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
-                           0));
-
-    // generate blocks - set throttle at a low rate so that all vector source
-    // samples are not flushed before the file sink is stopped, cause the
-    // flowgraph to be stopped
-    std::vector<gr_complex> data(40000);
-    gr::block_sptr src(gr::blocks::vector_source_c::make(data, true, 1, tags));
+    // generate sink block to generate filename based on collection parameters
     gr::sandia_utils::file_sink::sptr sink(
         gr::sandia_utils::file_sink::make("complex",
                                           sizeof(gr_complex),
@@ -245,76 +321,65 @@ BOOST_AUTO_TEST_CASE(t3)
                                           1000,
                                           "/tmp",
                                           "%Y%m%d_%H_%M_%S_fc=%fcMMHz_fs=%fskkHz.dat"));
-    gr::blocks::message_debug::sptr debug(gr::blocks::message_debug::make());
-    gr::block_sptr throttle(gr::blocks::throttle::make(sizeof(gr_complex), 1000, true));
-
     // set sink to start recording
     sink->set_second_align(false);
     sink->set_gen_new_folder(false);
     sink->set_recording(true);
 
-    gr::top_block_sptr tb(gr::make_top_block("t3"));
-    tb->connect(src, 0, throttle, 0);
-    tb->connect(throttle, 0, sink, 0);
-    tb->msg_connect(sink, "pdu", debug, "store");
-    tb->msg_connect(sink, "pdu", debug, "print");
-    tb->start();
+    // streaming interface simulator
+    streaming_interface sim(sink);
 
-    // let it run for sometime
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+    // add stream tags
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_rate(), pmt::from_double(30.72e6), 0);
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_freq(), pmt::from_double(915e6), 0);
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_time(),
+                pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
+                0);
 
-    // stop recording so message will be published
-    sink->set_recording(false);
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+    // "push" some data through sink
+    sim.push(1000);
 
-    // stop
-    tb->stop();
-    tb->wait();
+    // stop simulator
+    sim.stop();
 
     // collect results
-    BOOST_REQUIRE_EQUAL(debug->num_messages(), 1);
-    pmt::pmt_t message = debug->get_message(0);
-    BOOST_REQUIRE_EQUAL(pmt::is_pair(message), true);
-    pmt::pmt_t dict = pmt::car(message);
+    std::vector<pmt::pmt_t> messages = sim.messages();
+    BOOST_REQUIRE_EQUAL(1, messages.size());
+    BOOST_REQUIRE(pmt::is_pdu(messages[0]));
+    pmt::pmt_t dict = pmt::car(messages[0]);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict, gr::sandia_utils::RATE_KEY, pmt::PMT_NIL),
-                   pmt::from_double(30.72e6)),
+        pmt::equal(
+            pmt::dict_ref(dict, gr::sandia_utils::PMTCONSTSTR__rx_rate(), pmt::PMT_NIL),
+            pmt::from_double(30.72e6)),
         true);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict, gr::sandia_utils::FREQ_KEY, pmt::PMT_NIL),
-                   pmt::from_double(915e6)),
+        pmt::equal(
+            pmt::dict_ref(dict, gr::sandia_utils::PMTCONSTSTR__rx_freq(), pmt::PMT_NIL),
+            pmt::from_double(915e6)),
         true);
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
-                   pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0))),
+        pmt::equal(
+            pmt::dict_ref(dict, gr::sandia_utils::PMTCONSTSTR__rx_time(), pmt::PMT_NIL),
+            pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0))),
         true);
 
     std::string expected_fname = "/tmp/19700101_00_00_00_fc=915MHz_fs=30720kHz.dat";
     BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict, gr::sandia_utils::FNAME_KEY, pmt::PMT_NIL),
-                   pmt::intern(expected_fname)),
+        pmt::equal(
+            pmt::dict_ref(dict, gr::sandia_utils::PMTCONSTSTR__fname(), pmt::PMT_NIL),
+            pmt::intern(expected_fname)),
         true);
 
     // clean up
     remove_file(expected_fname);
 }
 
-// test tag name generation
+// validate that a tag on the first sample does not result
+// in a second file notice being published
 BOOST_AUTO_TEST_CASE(t4)
 {
-    // use a vector source block to place two tags in the stream
-    std::vector<gr::tag_t> tags;
-    tags.push_back(gen_tag(gr::sandia_utils::RATE_KEY, pmt::from_double(30.72e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::FREQ_KEY, pmt::from_double(915e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
-                           pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
-                           0));
 
-    // generate blocks - set throttle at a low rate so that all vector source
-    // samples are not flushed before the file sink is stopped, cause the
-    // flowgraph to be stopped
-    std::vector<gr_complex> data(40000);
-    gr::block_sptr src(gr::blocks::vector_source_c::make(data, true, 1, tags));
+    // generate sink
     gr::sandia_utils::file_sink::sptr sink(
         gr::sandia_utils::file_sink::make("complex",
                                           sizeof(gr_complex),
@@ -324,34 +389,46 @@ BOOST_AUTO_TEST_CASE(t4)
                                           1000,
                                           "/tmp",
                                           "test.fc32"));
-    gr::blocks::message_debug::sptr debug(gr::blocks::message_debug::make());
-    gr::block_sptr throttle(gr::blocks::throttle::make(sizeof(gr_complex), 1000, true));
-
     // set sink to start recording
     sink->set_second_align(false);
     sink->set_gen_new_folder(false);
     sink->set_recording(true);
 
-    gr::top_block_sptr tb(gr::make_top_block("t4"));
-    tb->connect(src, 0, throttle, 0);
-    tb->connect(throttle, 0, sink, 0);
-    tb->msg_connect(sink, "pdu", debug, "store");
-    tb->msg_connect(sink, "pdu", debug, "print");
-    tb->start();
+    // streaming interface simulator
+    streaming_interface sim(sink);
 
-    // let it run for sometime
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+    // use a vector source block to place two tags in the stream
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_rate(), pmt::from_double(30.72e6), 0);
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_freq(), pmt::from_double(915e6), 0);
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_time(),
+                pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
+                0);
+
+    // "push" some data
+    //int noutput_items = sim.push(4000);
+    sim.push(4000);
 
     // stop recording so message will be published
-    sink->set_recording(false);
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+    sim.stop();
 
-    // stop
-    tb->stop();
-    tb->wait();
+    // collect messages
+    std::vector<pmt::pmt_t> messages = sim.messages();
+    BOOST_REQUIRE_EQUAL(1, messages.size());
 
-    // collect results - only a single file should have been emitted
-    BOOST_REQUIRE_EQUAL(debug->num_messages(), 1);
+    // expected pmt
+    BOOST_REQUIRE(pmt::is_pdu(messages[0]));
+    pmt::pmt_t meta = pmt::car(messages[0]);
+    BOOST_REQUIRE(pmt::equal(pmt::from_double(30.72e6),
+                             pmt::dict_ref(meta, PMTCONSTSTR__rx_rate(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::from_double(915e6),
+                             pmt::dict_ref(meta, PMTCONSTSTR__rx_freq(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::intern("/tmp/test.fc32"),
+                             pmt::dict_ref(meta, PMTCONSTSTR__fname(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(
+        pmt::equal(pmt::from_uint64(8),
+                   pmt::dict_ref(meta, PMTCONSTSTR__item_size(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::from_uint64(4000),
+                             pmt::dict_ref(meta, PMTCONSTSTR__samples(), pmt::PMT_NIL)));
 
     // clean up
     remove_file("/tmp/test.fc32");
@@ -359,12 +436,12 @@ BOOST_AUTO_TEST_CASE(t4)
 
 
 // test generation of multiple files based on number of samples in file
+// note: because the simulator "stops" the sink before we simulating, the
+// current file names are off by one due to the automatic file number
+// increment
 BOOST_AUTO_TEST_CASE(t5)
 {
     // generate blocks
-    std::vector<gr_complex> data(4000);
-    gr::blocks::vector_source_c::sptr src(
-        gr::blocks::vector_source_c::make(data, false, 1));
     gr::sandia_utils::file_sink::sptr sink(
         gr::sandia_utils::file_sink::make("complex",
                                           sizeof(gr_complex),
@@ -374,86 +451,56 @@ BOOST_AUTO_TEST_CASE(t5)
                                           2000,
                                           "/tmp",
                                           "t_%02fd.fc32"));
-    gr::blocks::message_debug::sptr debug(gr::blocks::message_debug::make());
-    gr::block_sptr throttle(gr::blocks::throttle::make(sizeof(gr_complex), 32e3, true));
 
     // set sink to start recording
     sink->set_second_align(false);
     sink->set_gen_new_folder(false);
     sink->set_recording(true);
 
-    gr::top_block_sptr tb(gr::make_top_block("t5"));
-    tb->connect(src, 0, throttle, 0);
-    tb->connect(throttle, 0, sink, 0);
-    tb->msg_connect(sink, "pdu", debug, "store");
-    tb->msg_connect(sink, "pdu", debug, "print");
-    tb->start();
+    // streaming interface simulator
+    streaming_interface sim(sink);
 
-    // let it run for sometime
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+    // "process" enough data for two files
+    int noutput_items = sim.push(3000);
+    BOOST_REQUIRE_EQUAL(noutput_items, 3000);
 
-    // stop recording so message will be published
-    sink->set_recording(false);
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+    // stop simulation
+    sim.stop();
 
-    // stop
-    tb->stop();
-    tb->wait();
+    // collect messages
+    std::vector<pmt::pmt_t> messages = sim.messages();
+    BOOST_REQUIRE_EQUAL(2, messages.size());
 
-    // collect results - only a single file should have been emitted
-    BOOST_REQUIRE_EQUAL(debug->num_messages(), 2);
-    pmt::pmt_t message1 = debug->get_message(0);
-    pmt::pmt_t message2 = debug->get_message(1);
-    BOOST_REQUIRE_EQUAL(pmt::is_pair(message1), true);
-    BOOST_REQUIRE_EQUAL(pmt::is_pair(message2), true);
+    // expected pmt
+    BOOST_REQUIRE(pmt::is_pdu(messages[0]));
+    BOOST_REQUIRE(pmt::is_pdu(messages[1]));
 
-    // get time of first message
-    pmt::pmt_t dict1 = pmt::car(message1);
-    pmt::pmt_t dict2 = pmt::car(message2);
-    BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
-                   pmt::PMT_NIL),
-        false);
-    BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
-                   pmt::PMT_NIL),
-        false);
+    // verify rx timestamps relative to start and name of each file
+    pmt::pmt_t dict1 = pmt::car(messages[0]);
+    pmt::pmt_t dict2 = pmt::car(messages[1]);
     pmt::pmt_t time_tuple1 =
-        pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict1, gr::sandia_utils::PMTCONSTSTR__rx_time(), pmt::PMT_NIL);
     uint64_t tstart1 = pmt::to_uint64(pmt::tuple_ref(time_tuple1, 0));
 
     pmt::pmt_t time_tuple2 =
-        pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict2, gr::sandia_utils::PMTCONSTSTR__rx_time(), pmt::PMT_NIL);
     uint64_t tstart2 = pmt::to_uint64(pmt::tuple_ref(time_tuple2, 0));
     BOOST_REQUIRE_EQUAL(tstart2, tstart1 + 1);
+    BOOST_REQUIRE(pmt::equal(pmt::intern("/tmp/t_01.fc32"),
+                             pmt::dict_ref(dict1, PMTCONSTSTR__fname(), pmt::PMT_NIL)));
+    BOOST_REQUIRE(pmt::equal(pmt::intern("/tmp/t_02.fc32"),
+                             pmt::dict_ref(dict2, PMTCONSTSTR__fname(), pmt::PMT_NIL)));
 
     // clean up
-    BOOST_REQUIRE_EQUAL(remove_file("/tmp/t_00.fc32"), true);
-    BOOST_REQUIRE_EQUAL(remove_file("/tmp/t_01.fc32"), true);
+    BOOST_REQUIRE(remove_file("/tmp/t_01.fc32"));
+    BOOST_REQUIRE(remove_file("/tmp/t_02.fc32"));
 }
 
-
+// test a tag in the middle of a work function call to ensure that the number
+// of samples in the cut file is correct
 BOOST_AUTO_TEST_CASE(t6)
 {
-    // use a vector source block to place two tags in the stream
-    std::vector<gr::tag_t> tags;
-    tags.push_back(gen_tag(gr::sandia_utils::RATE_KEY, pmt::from_double(30.72e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::FREQ_KEY, pmt::from_double(915e6), 0));
-    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
-                           pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
-                           0));
-
-    // add a second tag with an updated time to simulate an overflow
-    tags.push_back(gen_tag(gr::sandia_utils::RX_TIME_KEY,
-                           pmt::make_tuple(pmt::from_uint64(1), pmt::from_double(0)),
-                           2000));
-
-    // generate blocks - set throttle at a low rate so that all vector source
-    // samples are not flushed before the file sink is stopped, cause the
-    // flowgraph to be stopped
-    std::vector<gr_complex> data(40000);
-    gr::blocks::vector_source_c::sptr src(
-        gr::blocks::vector_source_c::make(data, true, 1, tags));
+    // generate sink with a set number of samples per file
     gr::sandia_utils::file_sink::sptr sink(
         gr::sandia_utils::file_sink::make("complex",
                                           sizeof(gr_complex),
@@ -463,83 +510,79 @@ BOOST_AUTO_TEST_CASE(t6)
                                           1000,
                                           "/tmp",
                                           "t_%02fd.fc32"));
-    gr::blocks::message_debug::sptr debug(gr::blocks::message_debug::make());
-    gr::block_sptr throttle(gr::blocks::throttle::make(sizeof(gr_complex), 1000, true));
-
     // set sink to start recording
     sink->set_second_align(false);
     sink->set_gen_new_folder(false);
     sink->set_recording(true);
 
-    // set the work function size call smaller than the first tag so it appears
-    // in a second work function call
-    sink->set_max_noutput_items(512);
+    // streaming interface simulator
+    streaming_interface sim(sink);
 
-    gr::top_block_sptr tb(gr::make_top_block("t6"));
-    tb->connect(src, 0, throttle, 0);
-    tb->connect(throttle, 0, sink, 0);
-    tb->msg_connect(sink, "pdu", debug, "store");
-    tb->msg_connect(sink, "pdu", debug, "print");
-    tb->start();
+    // add tags into the stream on the first sample
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_rate(), pmt::from_double(30.72e6), 0);
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_freq(), pmt::from_double(915e6), 0);
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_time(),
+                pmt::make_tuple(pmt::from_uint64(0), pmt::from_double(0)),
+                0);
 
-    // let it run for sometime
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+    // add a second tag with an updated time to simulate an overflow
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_time(),
+                pmt::make_tuple(pmt::from_uint64(1), pmt::from_double(0)),
+                2000);
 
-    // stop recording so message will be published
-    sink->set_recording(false);
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+    // push a small chunk of data without a tag through
+    int noutput_items = sim.push(1500);
+    BOOST_REQUIRE_EQUAL(1500, noutput_items);
 
-    // stop
-    tb->stop();
-    tb->wait();
+    // try to push the next block through but should only process up
+    // to the tag
+    noutput_items = sim.push(1000, false);
+    BOOST_REQUIRE_EQUAL(500, noutput_items);
 
-    // collect results -two files should have been emitted
-    BOOST_REQUIRE_EQUAL(debug->num_messages(), 2);
-    pmt::pmt_t message1 = debug->get_message(0);
-    pmt::pmt_t message2 = debug->get_message(1);
-    BOOST_REQUIRE_EQUAL(pmt::is_pair(message1), true);
-    BOOST_REQUIRE_EQUAL(pmt::is_pair(message2), true);
+    // push the next block of data through
+    noutput_items = sim.push(1000, false);
+    BOOST_REQUIRE_EQUAL(1000, noutput_items);
 
-    // get time of first message
-    pmt::pmt_t dict1 = pmt::car(message1);
-    pmt::pmt_t dict2 = pmt::car(message2);
-    BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
-                   pmt::PMT_NIL),
-        false);
-    BOOST_REQUIRE_EQUAL(
-        pmt::equal(pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL),
-                   pmt::PMT_NIL),
-        false);
+    // stop the simulator
+    sim.stop();
+
+    // collect messages
+    std::vector<pmt::pmt_t> messages = sim.messages();
+    BOOST_REQUIRE_EQUAL(2, messages.size());
+
+    // expected pmt
+    BOOST_REQUIRE(pmt::is_pdu(messages[0]));
+    BOOST_REQUIRE(pmt::is_pdu(messages[1]));
+
+    // verify rx timestamps relative to start and name of each file
+    pmt::pmt_t dict1 = pmt::car(messages[0]);
+    pmt::pmt_t dict2 = pmt::car(messages[1]);
+
+    // validate time of messages and the number of samples in each file
     pmt::pmt_t time_tuple1 =
-        pmt::dict_ref(dict1, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict1, gr::sandia_utils::PMTCONSTSTR__rx_time(), pmt::PMT_NIL);
     pmt::pmt_t time_tuple2 =
-        pmt::dict_ref(dict2, gr::sandia_utils::RX_TIME_KEY, pmt::PMT_NIL);
+        pmt::dict_ref(dict2, gr::sandia_utils::PMTCONSTSTR__rx_time(), pmt::PMT_NIL);
     uint64_t tstart1 = pmt::to_uint64(pmt::tuple_ref(time_tuple1, 0));
     uint64_t tstart2 = pmt::to_uint64(pmt::tuple_ref(time_tuple2, 0));
+    uint64_t nsamples1 = pmt::to_uint64(pmt::dict_ref(
+        dict1, gr::sandia_utils::PMTCONSTSTR__samples(), pmt::from_uint64(0)));
+    uint64_t nsamples2 = pmt::to_uint64(pmt::dict_ref(
+        dict2, gr::sandia_utils::PMTCONSTSTR__samples(), pmt::from_uint64(0)));
     BOOST_REQUIRE_EQUAL(tstart1, uint64_t(0));
     BOOST_REQUIRE_EQUAL(tstart2, uint64_t(1));
+    BOOST_REQUIRE_EQUAL(nsamples1, uint64_t(2000));
+    BOOST_REQUIRE_EQUAL(nsamples2, uint64_t(1000));
 
     // clean up
-    BOOST_REQUIRE_EQUAL(remove_file("/tmp/t_00.fc32"), true);
-    BOOST_REQUIRE_EQUAL(remove_file("/tmp/t_01.fc32"), true);
-
-    // clean up
-    // remove_file("/tmp/test.fc32");
+    BOOST_REQUIRE(remove_file("/tmp/t_01.fc32"));
+    BOOST_REQUIRE(remove_file("/tmp/t_02.fc32"));
 }
 
 // test streaming with tags on first sample of work function call
 // https://gitlab.sandia.gov/sandia-sdr/gnuradio_common/gr-sandia_utils/issues/16
 BOOST_AUTO_TEST_CASE(t7)
 {
-    // generate a file source without a filename so that data is never
-    // generated
-    gr::sandia_utils::file_source::sptr source(gr::sandia_utils::file_source::make(
-        sizeof(gr_complex) * 1, "", "raw", false, false));
-    source->set_begin_tag(pmt::PMT_NIL);
-    source->add_file_tags(false);
-    source->set_file_queue_depth(1);
-
     // setup sink to generate multiple files of 4000 samples each
     gr::sandia_utils::file_sink::sptr sink(
         gr::sandia_utils::file_sink::make("complex",
@@ -554,68 +597,42 @@ BOOST_AUTO_TEST_CASE(t7)
     sink->set_second_align(false);
     sink->set_gen_new_folder(false);
 
-    // create top block
-    // start and stop immediately so all buffers can be initialized properly
-    // but the work function is not called when the input buffer is updated
-    gr::top_block_sptr tb(gr::make_top_block("t7"));
-    tb->connect(source, 0, sink, 0);
-    tb->start();
-    tb->stop();
-    tb->wait();
+    // streaming interface simulator
+    streaming_interface sim(sink);
 
-    // get buffer pointers
-    gr::buffer_sptr inbuf(source->detail()->output(0));
-    gr::buffer_reader_sptr reader = sink->detail()->input(0);
-
-    // vector pointers for input and output
-    gr_vector_const_void_star input_items(1);
-    gr_vector_void_star output_items(1);
-
-    // update buffer with "data"
-    inbuf->update_write_pointer(4000);
-
-    // add tag to first item
-    gr::tag_t rx_time_tag, rx_rate_tag, rx_freq_tag;
-    rx_time_tag.key = gr::sandia_utils::RATE_KEY;
-    rx_time_tag.value = pmt::from_double(30.72e6);
-    rx_time_tag.offset = 0;
-    inbuf->add_item_tag(rx_time_tag);
+    // add initial tag
+    sim.add_tag(gr::sandia_utils::PMTCONSTSTR__rx_rate(), pmt::from_double(30.72e6), 0);
 
     // add a second tag that will be on the first sample of the second
-    // work function call.  the curent file (t_01.fc32) should be closed and
-    // a second file opened
-    rx_time_tag.offset = 1000;
-    inbuf->add_item_tag(rx_time_tag);
+    // work function call.
+    sim.add_tag(
+        gr::sandia_utils::PMTCONSTSTR__rx_rate(), pmt::from_double(30.72e6), 1000);
 
-    // try to call work function
-    input_items[0] = reader->read_pointer();
-    output_items[0] = NULL; // no output for block
-    int noutput_items = sink->work(1000, input_items, output_items);
+
+    // "process" data
+    int noutput_items = sim.push(1000);
     BOOST_REQUIRE_EQUAL(noutput_items, 1000);
-    reader->update_read_pointer(noutput_items);
 
     // call work function again so second tag is consumed
-    input_items[0] = reader->read_pointer();
-    output_items[0] = NULL; // no output for block
-    noutput_items = sink->work(1000, input_items, output_items);
+    // but don't push anymore data into the input fifo
+    noutput_items = sim.push(1000, false);
     BOOST_REQUIRE_EQUAL(noutput_items, 0);
-    reader->update_read_pointer(noutput_items);
 
     // last work function call should have returned zero
-    input_items[0] = reader->read_pointer();
-    output_items[0] = NULL; // no output for block
-    noutput_items = sink->work(1000, input_items, output_items);
+    noutput_items = sim.push(1000, false);
     BOOST_REQUIRE_EQUAL(noutput_items, 1000);
-    reader->update_read_pointer(noutput_items);
 
-    // check
-    BOOST_REQUIRE_EQUAL(sink->stop(), true);
+    // stop simulator
+    BOOST_REQUIRE_EQUAL(sim.stop(), true);
+
+    // get messages
+    std::vector<pmt::pmt_t> messages = sim.messages();
+    BOOST_REQUIRE_EQUAL(2, messages.size());
 
     // remove files
     remove_file("/tmp/t_00.fc32"); // never actually written due to first stop call
     BOOST_REQUIRE_EQUAL(remove_file("/tmp/t_01.fc32"), true);
     BOOST_REQUIRE_EQUAL(remove_file("/tmp/t_02.fc32"), true);
 }
-
 } // namespace sandia_utils
 } // namespace gr

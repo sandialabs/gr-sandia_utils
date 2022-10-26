@@ -1,0 +1,49 @@
+id: sandia_utils_message_vector_csv_pdu
+label: Message Vector CSV pdu
+category: '[Sandia]/Sandia Utilities'
+
+templates:
+  imports: from gnuradio import sandia_utils
+  make: sandia_utils.message_vector_csv_pdu(${key_field}, ${max_history}, metadata_fields=${metadata_fields}, skip_empty=${skip_empty})
+  callbacks:
+  - set_current_key_value(${key_value})
+  - set_skip_empty(${skip_empty})
+  - set_max_history(${max_history})
+  - set_metadata_fields(${metadata_fields})
+
+parameters:
+- id: key_field
+  label: Key Field
+  dtype: string
+  default: "'key_field'"
+
+- id: max_history
+  label: Max History
+  dtype: int
+  default: 100
+
+- id: key_value
+  label: Curr Key Value
+  dtype: string
+  default: "'key1'"
+
+- id: metadata_fields
+  label: List of metadata key strings
+  dtype: raw
+  default: []
+
+- id: skip_empty
+  label: Skip Empty
+  dtype: bool
+  default: True
+  
+inputs:
+-   domain: message
+    id: pdu_in
+    optional: 1
+outputs:
+-   domain: message
+    id: pdu_out
+    optional: 1
+
+file_format: 1
