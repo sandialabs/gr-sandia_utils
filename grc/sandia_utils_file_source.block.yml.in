@@ -83,7 +83,7 @@ asserts:
 
 templates:
     imports: |-
-        import sandia_utils
+        from gnuradio import sandia_utils
         import pmt
     make: |+
         sandia_utils.file_source(${type.size}*${vlen}, ${file}, ${file_type}, ${repeat}, ${force_new})

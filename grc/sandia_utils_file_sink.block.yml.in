@@ -112,7 +112,7 @@ asserts:
 - ${ file_num_rollover > -1 }
 
 templates:
-    imports: import sandia_utils
+    imports: from gnuradio import sandia_utils
     make: |+
         sandia_utils.file_sink(${type.str}, ${type.size}*${vlen}, ${file_type},
           ${mode}, ${nsamples}, ${rate}, ${directory}, ${name_spec}, ${debug})
