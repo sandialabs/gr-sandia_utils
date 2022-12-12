@@ -15,7 +15,7 @@
 #include <gnuradio/io_signature.h>
 #include <boost/filesystem.hpp>
 #include <fstream>
-
+#include <boost/format.hpp>
 namespace gr {
 namespace sandia_utils {
 

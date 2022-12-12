@@ -15,6 +15,7 @@
 #include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
 #include <boost/filesystem/path.hpp>
+#include <boost/format.hpp>
 
 namespace fs = boost::filesystem;
 namespace gr {

@@ -20,6 +20,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/format.hpp>
 #include <string>
 
 namespace gr

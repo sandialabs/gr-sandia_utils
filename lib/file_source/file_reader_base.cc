@@ -16,7 +16,7 @@
 // #include "../file_source_impl.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <boost/format.hpp>
 
 namespace gr {
   namespace sandia_utils {
