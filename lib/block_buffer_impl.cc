@@ -157,7 +157,7 @@ int block_buffer_impl::general_work(int noutput_items,
 
         // read as much as we can into the current buffer
         size_t to_read =
-            std::min((size_t)(ninput_items[0] - in_idx), d_nsamples - d_read_idx);
+            std::min<size_t>((size_t)(ninput_items[0] - in_idx), d_nsamples - d_read_idx);
 
 
         // update current rate
@@ -313,8 +313,8 @@ int block_buffer_impl::general_work(int noutput_items,
             int64_t numsamples_skipped =
                 (d_buf[d_writing].abs_read_idx == 0)
                     ? 0
-                    : std::max(d_buf[d_writing].abs_read_idx - d_last_abs_read_idx -
-                                   d_nsamples,
+                    : std::max<unsigned long long>(d_buf[d_writing].abs_read_idx -
+				   d_last_abs_read_idx - d_nsamples,
                                0lu);
 
             // if there's not already an rx_time tag, and some samples were skipped,
@@ -352,7 +352,7 @@ int block_buffer_impl::general_work(int noutput_items,
         }
 
         // write as much as we can from the current buffer
-        size_t to_write = std::min((size_t)(noutput_items - d_nreserved - out_idx),
+        size_t to_write = std::min<size_t>((size_t)(noutput_items - d_nreserved - out_idx),
                                    d_nsamples - d_write_idx);
 
         // write from buffer
