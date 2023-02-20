@@ -146,10 +146,8 @@ namespace gr
               d_rate = rate;
               d_T = (double)d_nsamples / (double)d_rate;
           } else {
-              GR_LOG_DEBUG(
-                  d_logger,
-                  boost::format(
-                      "Invalid sampling rate %d.  Rate must be greater than zero") %
+              d_logger->debug(
+                      "Invalid sampling rate {}.  Rate must be greater than zero",
                       rate);
           }
         }

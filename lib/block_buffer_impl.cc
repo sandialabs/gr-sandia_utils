@@ -232,25 +232,17 @@ int block_buffer_impl::general_work(int noutput_items,
                 // reset to pont of last tag
                 d_read_idx = 0;
                 in_idx = tags.back().offset - nitems_read(0);
-                GR_LOG_DEBUG(d_logger,
-                             boost::format("bad tags... starting buffer %d over at %d") %
-                                 d_reading % in_idx);
-                GR_LOG_DEBUG(d_logger,
-                             boost::format("the size of overflow_tags is %ld") %
+                d_logger->debug("bad tags... starting buffer {} over at {}",
+                                 d_reading, in_idx);
+                d_logger->debug("the size of overflow_tags is {}",
                                  overflow_tags.size());
                 if (overflow_tags.size()) {
-                    GR_LOG_DEBUG(d_logger,
-                                 boost::format("the overflow tags value is %d") %
-                                     pmt::to_bool(overflow_tags[0].value));
+                    d_logger->debug("the overflow tags value is {}",pmt::to_bool(overflow_tags[0].value));
                 }
-                GR_LOG_DEBUG(d_logger,
-                             boost::format("the size of tags is %ld") % tags.size());
-                GR_LOG_DEBUG(d_logger,
-                             boost::format("the abs_read index is %ld") %
-                                 d_buf[d_reading].abs_read_idx);
+                d_logger->debug("the size of tags is {}",tags.size());
+                d_logger->debug("the abs_read index is {}",d_buf[d_reading].abs_read_idx);
                 if (tags.size()) {
-                    GR_LOG_DEBUG(d_logger,
-                                 boost::format("the tags[0] offset is %ld") %
+                    d_logger->debug("the tags[0] offset is {}",
                                      tags[0].offset);
                 }
                 continue;
