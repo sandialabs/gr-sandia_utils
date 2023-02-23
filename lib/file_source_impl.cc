@@ -15,7 +15,7 @@
 #include <gnuradio/io_signature.h>
 #include <boost/filesystem.hpp>
 #include <fstream>
-
+#include <boost/format.hpp>
 namespace gr {
 namespace sandia_utils {
 
@@ -101,7 +101,7 @@ file_source_impl::file_source_impl(
 
         // open file if specified
         if (filename[0] != '\0') {
-            GR_LOG_DEBUG(d_logger, str(boost::format("Opening IQ file: %s") % filename));
+            d_logger->debug("Opening IQ file: {}",filename);
             this->open(filename, d_repeat);
         }
     }
@@ -150,7 +150,7 @@ void file_source_impl::run()
     // open file
     std::string current_file = d_filename;
     std::ifstream file;
-    GR_LOG_DEBUG(d_logger, str(boost::format("Opening message file: %s") % current_file));
+    d_logger->debug("Opening message file: {}", current_file);
     file.open(current_file, std::ios::in | std::ios::binary);
     if (not file.is_open()) {
         throw std::runtime_error(
@@ -171,17 +171,17 @@ void file_source_impl::run()
         uint32_t len;
         file.read((char*)&len, sizeof(uint32_t));
         if (file.fail()) {
-            GR_LOG_ERROR(d_logger, str(boost::format("Unable to read message length")));
+            d_logger->error(("Unable to read message length"));
             break;
         }
-        GR_LOG_DEBUG(d_logger, str(boost::format("Message length: %u") % len));
+        d_logger->debug(str(boost::format("Message length: %u") % len));
 
         // read in message
         if (len != 0) {
             std::string st((size_t)len, 0);
             file.read((char*)st.c_str(), len);
             if (file.fail()) {
-                GR_LOG_ERROR(d_logger, str(boost::format("Unable to read message")));
+                d_logger->error(("Unable to read message"));
                 break;
             }
 
@@ -190,8 +190,7 @@ void file_source_impl::run()
             try {
                 msg = pmt::deserialize_str(st);
             } catch (...) {
-                GR_LOG_ERROR(d_logger,
-                             str(boost::format("Unable to deserialize message")));
+                d_logger->error("Unable to deserialize message");
                 break;
             }
             message_port_pub(PMTCONSTSTR__out(), msg);
@@ -236,7 +235,7 @@ void file_source_impl::open(const char* filename, bool repeat)
     // only open if we are forcing open.  otherwise, place file onto
     // queue and let work function handle Opening
     if (d_force_new) {
-        GR_LOG_DEBUG(d_logger, "Forcing file close and new file open");
+        d_logger->debug("Forcing file close and new file open");
         d_reader->close();
         d_reader->open(filename);
         d_tag_now = true;
@@ -246,7 +245,7 @@ void file_source_impl::open(const char* filename, bool repeat)
             gr::thread::scoped_lock lock(fp_mutex);
 
             // clear queue
-            GR_LOG_DEBUG(d_logger, "Maximum number of file entries reached...resetting");
+            d_logger->debug("Maximum number of file entries reached...resetting");
             while (d_file_queue.size()) {
                 d_file_queue.pop();
             }
@@ -303,12 +302,12 @@ void file_source_impl::handle_msg(pmt::pmt_t pdu)
     } else if (pmt::is_pair(pdu)) {
         // must have a dictionary as the first element
         if (not pmt::is_dict(pmt::car(pdu))) {
-            GR_LOG_DEBUG(d_logger, "pair does not have a dict as first element");
+            d_logger->debug("pair does not have a dict as first element");
             return;
         }
         dict = pmt::car(pdu);
     } else {
-        GR_LOG_DEBUG(d_logger, "pmt is neither a dict nor a pair/pdu");
+        d_logger->debug("pmt is neither a dict nor a pair/pdu");
         return;
     }
 
@@ -322,8 +321,7 @@ void file_source_impl::handle_msg(pmt::pmt_t pdu)
         if (boost::filesystem::exists(fname)) {
             this->open(fname.c_str(), d_repeat);
         } else {
-            GR_LOG_ERROR(d_logger,
-                         boost::format("file %s does not exist") % fname.c_str());
+            d_logger->error("file {} does not exist", fname.c_str());
         }
     }
 

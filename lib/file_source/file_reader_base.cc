@@ -16,7 +16,7 @@
 // #include "../file_source_impl.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <boost/format.hpp>
 
 namespace gr {
   namespace sandia_utils {
@@ -42,7 +42,7 @@ namespace gr {
     file_reader_base::open(const char *filename) {
       if (d_is_open) { this->close(); }
 
-      GR_LOG_DEBUG(d_logger,boost::format("File Reader: Opening file %s") % filename);
+      d_logger->debug("File Reader: Opening file {}", filename);
 
       // clear all tags
       d_tags.clear();

@@ -20,7 +20,6 @@
 #include "pmt/pmt.h"
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/format.hpp>
 #include <iostream>
 #include <stdio.h>
 #include <math.h>     // pow

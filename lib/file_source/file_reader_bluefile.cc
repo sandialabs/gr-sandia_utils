@@ -21,7 +21,7 @@ namespace gr
         this->close();
       }
 
-      GR_LOG_DEBUG( d_logger, boost::format("File Reader: Opening file %s") % filename );
+      d_logger->debug("File Reader: Opening file {}",filename );
       d_filename = std::string( filename );
 
       d_blue_reader = new bluefile::BlueFile();
@@ -90,7 +90,7 @@ namespace gr
     {
       if( d_is_open and d_blue_reader->is_open() )
       {
-        GR_LOG_DEBUG( d_logger, boost::format("Seeking in bluefile reader: %ld, %d") % seek_point % whence );
+        d_logger->debug("Seeking in bluefile reader: {}, {}", seek_point, whence );
         d_blue_reader->seek( double( seek_point ), bluefile::BlueFile::BlueFileSeekEnum( whence ) );
       }
       return true;
@@ -106,7 +106,7 @@ namespace gr
 
       if( d_blue_reader->is_open() )
       {
-        GR_LOG_DEBUG( d_logger, boost::format("File Reader: Closing file %s") % d_filename );
+        d_logger->debug("File Reader: Closing file {}",d_filename );
         d_blue_reader->close();
 
         // set flag

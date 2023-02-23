@@ -20,6 +20,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/format.hpp>
 #include <string>
 
 namespace gr
@@ -145,10 +146,8 @@ namespace gr
               d_rate = rate;
               d_T = (double)d_nsamples / (double)d_rate;
           } else {
-              GR_LOG_DEBUG(
-                  d_logger,
-                  boost::format(
-                      "Invalid sampling rate %d.  Rate must be greater than zero") %
+              d_logger->debug(
+                      "Invalid sampling rate {}.  Rate must be greater than zero",
                       rate);
           }
         }

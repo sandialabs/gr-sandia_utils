@@ -14,7 +14,7 @@
 #include "invert_tune_impl.h"
 #include "gnuradio/sandia_utils/constants.h"
 #include <gnuradio/io_signature.h>
-
+#include <boost/format.hpp>
 namespace gr {
 namespace sandia_utils {
 
@@ -52,21 +52,16 @@ invert_tune_impl::~invert_tune_impl() {}
 bool invert_tune_impl::stop()
 {
     if (d_n_ops) {
-        GR_LOG_DEBUG(d_logger,
-                     boost::format("invert_tune_impl::stop(), Operations %d") % d_n_ops);
+        d_logger->debug("invert_tune_impl::stop(), Operations {}", d_n_ops);
     }
     if (d_n_error) {
-        GR_LOG_DEBUG(d_logger,
-                     boost::format("invert_tune_impl::stop(), errors %d") % d_n_error);
+        d_logger->debug("invert_tune_impl::stop(), errors {}", d_n_error);
     }
     if (d_n_pdu) {
-        GR_LOG_DEBUG(d_logger,
-                     boost::format("invert_tune_impl::stop(), pdus %d") % d_n_pdu);
+        d_logger->debug("invert_tune_impl::stop(), pdus {}", d_n_pdu);
     }
     if (d_n_exception) {
-        GR_LOG_DEBUG(d_logger,
-                     boost::format("invert_tune_impl::stop(), exceptions %d") %
-                         d_n_exception);
+        d_logger->debug("invert_tune_impl::stop(), exceptions {}",d_n_exception);
     }
 
     return true;
