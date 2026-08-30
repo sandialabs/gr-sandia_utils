@@ -13,8 +13,8 @@ parameters:
     label: File Type
     dtype: string
     default: raw
-    options: [message, raw, raw_header@HAVE_BLU_GRC_OPTION@ ]
-    option_labels: [Message, Raw IQ, Raw IQ + Header@HAVE_BLU_GRC_LABEL@ ]
+    options: [message, raw, raw_header, sigmf@HAVE_BLU_GRC_OPTION@ ]
+    option_labels: [Message, Raw IQ, Raw IQ + Header, SigMF@HAVE_BLU_GRC_LABEL@ ]
     hide: part
 -   id: rate
     label: Sampling Rate

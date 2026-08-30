@@ -14,6 +14,7 @@
 #include "file_writer_base.h"
 #include "file_writer_raw.h"
 #include "file_writer_raw_header.h"
+#include "file_writer_sigmf.h"
 #ifdef HAVE_BLUEFILE_LIB
 #include "file_writer_bluefile.h"
 #endif
@@ -64,6 +65,10 @@ namespace gr {
       else if( file_type == "raw_header" )
       {
         p = sptr( new file_writer_raw_header( data_type, file_type, itemsize, nsamples, rate, out_dir, name_spec, logger ) );
+      }
+      else if( file_type == "sigmf" )
+      {
+        p = sptr( new file_writer_sigmf( data_type, file_type, itemsize, nsamples, rate, out_dir, name_spec, logger ) );
       }
 #ifdef HAVE_BLUEFILE_LIB
       else if (file_type == "bluefile"){

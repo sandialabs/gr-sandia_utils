@@ -67,6 +67,8 @@ gr_add_test(qa_invert_tune ${PYTHON_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/qa_invert_tune.py)
 gr_add_test(qa_file_source ${PYTHON_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/qa_file_source.py)
+gr_add_test(qa_sigmf ${PYTHON_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/qa_sigmf.py)
 gr_add_test(qa_message_file_debug ${PYTHON_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/qa_message_file_debug.py)
 gr_add_test(qa_message_vector_file_sink ${PYTHON_EXECUTABLE}
