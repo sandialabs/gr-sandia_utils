@@ -96,7 +96,7 @@ endif(APPLE)
 # Find gnuradio build dependencies
 ########################################################################
 find_package(Doxygen)
-find_package(Boost REQUIRED chrono filesystem)
+find_package(Boost REQUIRED chrono filesystem unit_test_framework)
 find_package(gnuradio-pdu_utils REQUIRED)
 
 # ##############################################################################

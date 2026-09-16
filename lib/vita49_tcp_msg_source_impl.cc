@@ -15,7 +15,7 @@
 #include <gnuradio/io_signature.h>
 #include <gnuradio/sandia_utils/constants.h>
 #include <arpa/inet.h>
-#include <endian.h>
+#include <sys/types.h>          // cross platform include for endian.h
 
 namespace gr
 {
