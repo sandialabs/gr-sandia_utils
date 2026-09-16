@@ -342,7 +342,7 @@ int tagged_bits_to_bytes_impl::general_work(int noutput_items,
                      time_pair_pmt,
                      PMTCONSTSTR__tagged_bits_block());
     } else if (added_burst_tag) {
-        GR_LOG_WARN(d_logger, "Tagged byte tag added without corresponding time tag")
+        d_logger->warn("Tagged byte tag added without corresponding time tag");
     }
 
 

@@ -282,12 +282,10 @@ int file_sink_impl::work(int noutput_items,
                     d_ndiscard = (int)std::ceil((double)d_file_writer->get_rate() *
                                                 (1.0 - d_samp_time.epoch_frac()));
                     if (d_debug) {
-                        GR_LOG_DEBUG(
-                            d_logger,
-                            boost::format(
-                                "epoch_sec = %ld, epoch_frac = %0.6e, ndiscard = %d") %
-                                d_samp_time.epoch_sec() % d_samp_time.epoch_frac() %
-                                d_ndiscard);
+                        std::ostringstream msg;
+                        msg << boost::format("epoch_sec = %ld, epoch_frac = %0.6e, ndiscard = %d") %
+                                d_samp_time.epoch_sec() % d_samp_time.epoch_frac() % d_ndiscard;
+                        d_logger->debug(msg.str());
                     }
                 }
 
@@ -305,10 +303,11 @@ int file_sink_impl::work(int noutput_items,
                 if (d_issue_start) {
                     // start file writer if it has been closed
                     if (d_debug) {
-                        GR_LOG_DEBUG(
-                            d_logger,
-                            boost::format("starting writer: sec = %ld, frac = %0.6e") %
-                                d_samp_time.epoch_sec() % d_samp_time.epoch_frac());
+                        std::ostringstream msg;
+                        msg << boost::format("starting writer: sec = %ld, frac = %0.6e") %
+                            d_samp_time.epoch_sec() % d_samp_time.epoch_frac();
+                        d_logger->debug(msg.str());
+
                     }
                     d_file_writer->start(d_samp_time);
                     d_issue_start = false;
@@ -344,10 +343,11 @@ int file_sink_impl::work(int noutput_items,
             // issue start if necessary
             if (d_issue_start) {
                 if (d_debug) {
-                    GR_LOG_DEBUG(d_logger,
-                                 boost::format(
+                    std::ostringstream msg;
+                    msg << boost::format(
                                      "starting burst writer: sec = %ld, frac = %0.6e\n") %
-                                     d_samp_time.epoch_sec() % d_samp_time.epoch_frac());
+                                     d_samp_time.epoch_sec() % d_samp_time.epoch_frac();
+                    d_logger->debug(msg.str());
                 }
                 d_file_writer->start(d_samp_time);
                 d_issue_start = false;
@@ -355,8 +355,7 @@ int file_sink_impl::work(int noutput_items,
 
             get_tags_in_range(burst_tags, 0, start, end, PMTCONSTSTR__eob());
             if (burst_tags.size() or do_stop) {
-                GR_LOG_DEBUG(d_logger,
-                             "Burst stop tag received.  Stopping burst writer...\n");
+                d_logger->debug("Burst stop tag received.  Stopping burst writer...\n");
 
                 // process all samples up to and including tag
                 nprocessed = burst_tags[0].offset - start + 1;
@@ -412,7 +411,7 @@ bool file_sink_impl::stop()
         d_file_writer->stop();
     } else {
         if (d_msg_file.bad()) {
-            GR_LOG_DEBUG(d_logger, "d_msg_file had badbit set");
+            d_logger->debug("d_msg_file had badbit set");
         }
         d_msg_file.flush();
         d_msg_file.close();
@@ -466,14 +465,16 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
     bool config_changed = false;
 
     if (d_debug) {
-        GR_LOG_DEBUG(d_logger,
-                     boost::format("Starting tag offset: %ld") % (starting_offset));
+        std::ostringstream msg;
+        msg << boost::format("Starting tag offset: %ld") % (starting_offset);
+        d_logger->debug(msg.str());
     }
     for (size_t tag_num = 0; tag_num < tags.size(); ++tag_num) {
         if (d_debug) {
-            GR_LOG_DEBUG(d_logger,
-                         boost::format("File Sink Tag %ld: key %s, offset %ld") %
-                             tag_num % tags[tag_num].key % tags[tag_num].offset);
+            std::ostringstream msg;
+            msg << boost::format("File Sink Tag %ld: key %s, offset %ld") %
+                             tag_num % tags[tag_num].key % tags[tag_num].offset;
+            d_logger->debug(msg.str());
         }
 
         // ensure tags that don't affect stream are processed first
@@ -483,17 +484,19 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
             // update delta
             d_T = 1.0 / (double)d_file_writer->get_rate();
             d_samp_time.set_T(d_T);
-            GR_LOG_DEBUG(d_logger,
-                         boost::format("Sample rate set to %d Hz") %
-                             d_file_writer->get_rate());
+            std::ostringstream msg;
+            msg << boost::format("Sample rate set to %d Hz") %
+                             d_file_writer->get_rate();
+            d_logger->debug(msg.str());
 
             config_changed = true;
             change_offset = tags[tag_num].offset;
         } else if (pmt::equal(tags[tag_num].key, PMTCONSTSTR__rx_freq())) {
             d_file_writer->set_freq((uint64_t)pmt::to_double(tags[tag_num].value));
-            GR_LOG_DEBUG(d_logger,
-                         boost::format("Frequency set to %d Hz") %
-                             d_file_writer->get_freq());
+            std::ostringstream msg;
+            msg << boost::format("Frequency set to %d Hz") %
+                             d_file_writer->get_freq();
+            d_logger->debug(msg.str());
 
             config_changed = true;
             change_offset = tags[tag_num].offset;
@@ -503,9 +506,10 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
                 d_samp_time.set(pmt::to_uint64(pmt::tuple_ref(time_tuple, 0)),
                                 pmt::to_double(pmt::tuple_ref(time_tuple, 1)),
                                 1.0 / (double)d_file_writer->get_rate());
-                GR_LOG_DEBUG(d_logger,
-                             boost::format("Updating time: (%ld, %0.6f)") %
-                                 (d_samp_time.epoch_sec()) % (d_samp_time.epoch_frac()));
+            std::ostringstream msg;
+            msg << boost::format("Updating time: (%ld, %0.6f)") %
+                                 (d_samp_time.epoch_sec()) % (d_samp_time.epoch_frac());
+            d_logger->debug(msg.str());
 
                 config_changed = true;
                 change_offset = tags[tag_num].offset;
@@ -519,14 +523,14 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
     // indicate a configuration change, and the last observed offset for a
     // configuration change is the same as the starting offset
     if (d_debug) {
-        GR_LOG_DEBUG(
-            d_logger,
-            boost::format("config changed %d, change offset %ld, writer started %d") %
-                config_changed % change_offset % d_file_writer->is_started());
+        std::ostringstream msg;
+        msg << boost::format("config changed %d, change offset %ld, writer started %d") %
+                config_changed % change_offset % d_file_writer->is_started();
+        d_logger->debug(msg.str());
     }
     if (config_changed) {
         if ((change_offset == starting_offset) and not d_file_writer->is_started()) {
-            GR_LOG_DEBUG(d_logger, "issuing start command");
+            d_logger->debug("issuing start command");
 
             // signal to begin recording when ready
             d_check_start = true;
@@ -537,7 +541,7 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
             if (d_file_writer->is_started()) {
                 // The command to stop the writer is issued when any tags that require
                 // reconfiguration are observed while the writer is started
-                GR_LOG_DEBUG(d_logger, "issuing stop command");
+                d_logger->debug("issuing stop command");
                 do_stop = true;
             }
 
@@ -554,8 +558,9 @@ int file_sink_impl::do_handle_tags(std::vector<tag_t>& tags,
     // last configuration change tag, which defaults to the last sample so that
     // all are consumed if no configuration changes are observed
     if (d_debug) {
-        GR_LOG_DEBUG(d_logger,
-                     boost::format("Number of samples to consume: %ld") % (ntoconsume));
+        std::ostringstream msg;
+        msg << boost::format("Number of samples to consume: %ld") % (ntoconsume);
+        d_logger->debug(msg.str());
     }
     return ntoconsume;
 }
@@ -591,7 +596,9 @@ void file_sink_impl::set_mode(trigger_type_t mode)
 }
 void file_sink_impl::do_set_mode(trigger_type_t mode)
 {
-    GR_LOG_DEBUG(d_logger, boost::format("Setting mode to %d") % mode);
+    std::ostringstream msg;
+    msg << boost::format("Setting mode to %d") % mode;
+    d_logger->debug(msg.str());
 
     // make change only if changing mode
     if (mode != d_mode) {

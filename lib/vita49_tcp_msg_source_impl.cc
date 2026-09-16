@@ -54,7 +54,7 @@ namespace gr
       stat = rx->start();
       if( stat != 1 )
       {
-        GR_LOG_WARN(d_logger, "Error starting vita_rx component");
+        d_logger->warn("Error starting vita_rx component");
       }
       */
 
@@ -78,7 +78,7 @@ namespace gr
     bool vita49_tcp_msg_source_impl::start( void )
     {
 
-      GR_LOG_INFO( d_logger, "vita49_tcp_msg_source_impl::start()");
+      d_logger->info("vita49_tcp_msg_source_impl::start()");
 
       d_running = true;
 
@@ -93,7 +93,7 @@ namespace gr
     {
         d_running = false;
 
-        GR_LOG_INFO(d_logger, "vita49_tcp_msg_source_impl::stop()");
+        d_logger->info("vita49_tcp_msg_source_impl::stop()");
 
         if (!d_socketAlwaysOn) {
             closeBackend();
@@ -123,12 +123,12 @@ namespace gr
             }
             default: {
                 // drop it
-                GR_LOG_DEBUG(d_logger, "Dropping unhandled packet type");
+                d_logger->debug("Dropping unhandled packet type");
                 break;
             }
             } // end switch
         } else {
-            GR_LOG_DEBUG(d_logger, "GR Block not running, Dropping packet");
+            d_logger->debug("GR Block not running, Dropping packet");
         }
 
         return;
@@ -306,11 +306,11 @@ namespace gr
     {
         int stat;
 
-        GR_LOG_INFO(d_logger, "openBackend");
+        d_logger->info("openBackend");
 
         stat = rx->start();
         if (stat != 1) {
-            GR_LOG_WARN(d_logger, "Error starting vita_rx component");
+            d_logger->warn("Error starting vita_rx component");
         }
 
         return;
@@ -320,11 +320,11 @@ namespace gr
     {
         int stat;
 
-        GR_LOG_INFO(d_logger, "closeBackend");
+        d_logger->info("closeBackend");
 
         stat = rx->stop();
         if (stat != 1) {
-            GR_LOG_WARN(d_logger, "Error stopping vita_rx component");
+            d_logger->warn("Error stopping vita_rx component");
         }
 
         return;

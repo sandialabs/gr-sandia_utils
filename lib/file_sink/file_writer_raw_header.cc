@@ -35,7 +35,7 @@ namespace gr
 
     void file_writer_raw_header::open( std::string fname )
     {
-      GR_LOG_DEBUG(d_logger,boost::format("Opening file %s") % fname.c_str());
+      d_logger->debug("Opening file {}",fname.c_str());
       d_outfile.open( fname.c_str(), std::ofstream::binary );
 
       // write header
@@ -52,7 +52,7 @@ namespace gr
     {
       if( d_outfile.is_open() )
       {
-        GR_LOG_DEBUG(d_logger,boost::format("Closing file %s") % d_filename);
+        d_logger->debug("Closing file {}",d_filename);
         d_outfile.flush();
         d_outfile.close();
       }

@@ -40,7 +40,7 @@ namespace gr {
     void
     file_writer_bluefile::open(std::string fname){
       if (not d_initialized) {
-        GR_LOG_DEBUG(d_logger,boost::format("Opening bluefile %s") % d_filename);
+        d_logger->debug("Opening bluefile {}", d_filename);
 
         // generate new object
         try
@@ -50,7 +50,7 @@ namespace gr {
         }
         catch (const std::runtime_error& error)
         {
-          GR_LOG_WARN(d_logger,boost::format("file sink bluefile runtime error on 'open': %s") % error.what());
+          d_logger->warn("file sink bluefile runtime error on 'open': {}",error.what());
           return;
         }
 
@@ -111,7 +111,7 @@ namespace gr {
     {
       if( d_initialized )
       {
-        GR_LOG_DEBUG(d_logger,boost::format("Closing bluefile %s") % d_filename);
+        d_logger->debug("Closing bluefile {}",d_filename);
 
         // close the file
         try
@@ -124,7 +124,7 @@ namespace gr {
         }
         catch (const std::runtime_error& error)
         {
-          GR_LOG_WARN(d_logger, boost::format("file sink bluefile flush and close runtime error: %s") % error.what());
+          d_logger->debug("file sink bluefile flush and close runtime error: {}", error.what());
         }
 
         d_initialized = false;
@@ -135,7 +135,7 @@ namespace gr {
     {
       if( !d_initialized )
       {
-        GR_LOG_WARN(d_logger, "file sink bluefile: uninitialized writer, dropping data");
+        d_logger->warn("file sink bluefile: uninitialized writer, dropping data");
         return nitems;
       }
 
@@ -146,7 +146,7 @@ namespace gr {
       }
       catch (const std::runtime_error& error)
       {
-        GR_LOG_WARN(d_logger, boost::format("file sink bluefile write error: %s") % error.what());
+        d_logger->warn("file sink bluefile write error: {}",error.what());
         nwritten = nitems;
       }
 
