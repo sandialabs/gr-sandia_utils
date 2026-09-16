@@ -14,6 +14,7 @@
 #include <sys/time.h> /* struct timeval, gettimeofday */
 #include <cmath>      /* modf */
 #include <iostream>
+#include <cstdint>
 
 namespace gr {
 namespace sandia_utils {
