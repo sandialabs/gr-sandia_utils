@@ -34,12 +34,14 @@ target_sources(gnuradio-sandia_utils PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/file_sink/file_writer_base.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/file_sink/file_writer_raw.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/file_sink/file_writer_raw_header.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/file_sink/file_writer_sigmf.cc
 )
 
 # File source
 target_sources(gnuradio-sandia_utils PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/file_source/file_reader_base.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/file_source/file_reader_raw_header.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/file_source/file_reader_sigmf.cc
 )
 
 # VITA Source

@@ -10,6 +10,7 @@
 #ifndef INCLUDED_SANDIA_EPOCH_TIME_H
 #define INCLUDED_SANDIA_EPOCH_TIME_H
 
+#include <stdint.h>   /* uint64_t */
 #include <sys/time.h> /* struct timeval, gettimeofday */
 #include <cmath>      /* modf */
 #include <iostream>

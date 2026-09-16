@@ -32,7 +32,7 @@ namespace sandia_utils {
  *
  * \param itemsize  the size of each item in the file, in bytes
  * \param filename  name of the file to source from
- * \param type file type, Example Values = message, raw, raw_header, bluefile
+ * \param type file type, Example Values = message, raw, raw_header, sigmf, bluefile
  * \param repeat  repeat file from start
  * \param force_new Force open new file upon command, regardless of current status
  */
@@ -48,7 +48,8 @@ file_source::sptr file_source::make(
  *
  * @param itemsize - per item size in bytes
  * @param filename - filename to open as source.
- * @param type - type of file input, Example Values = message, raw, raw_header, bluefile
+ * @param type - type of file input, Example Values = message, raw, raw_header, sigmf,
+ *               bluefile
  * @param repeat - repeat a single file over and over.
  * @param force_new - Force open new file upon command, regardless of current status
  */
@@ -84,6 +85,8 @@ file_source_impl::file_source_impl(
         } else if (strcmp(type, "raw_header") == 0) {
             d_reader =
                 file_reader_base::sptr(new file_reader_raw_header(itemsize, d_logger));
+        } else if (strcmp(type, "sigmf") == 0) {
+            d_reader = file_reader_base::sptr(new file_reader_sigmf(itemsize, d_logger));
         }
 #ifdef HAVE_BLUEFILE_LIB
         else if (strcmp(type, "bluefile") == 0) {

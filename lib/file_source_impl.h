@@ -12,6 +12,7 @@
 
 #include "file_source/file_reader_base.h"
 #include "file_source/file_reader_raw_header.h"
+#include "file_source/file_reader_sigmf.h"
 #include <gnuradio/sandia_utils/constants.h>
 #include <gnuradio/sandia_utils/file_source.h>
 #include <gnuradio/tags.h>
@@ -75,7 +76,7 @@ public:
      *
      * @param itemsize - per item size in bytes
      * @param filename - filename to open as source.
-     * @param type - type of file input, Example Values = message, raw, raw_header,
+     * @param type - type of file input, Example Values = message, raw, raw_header, sigmf,
      * bluefile
      * @param repeat - repeat a single file over and over.
      * @param force_new - Force open new file upon command, regardless of current status

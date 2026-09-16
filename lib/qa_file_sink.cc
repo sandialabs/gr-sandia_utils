@@ -247,6 +247,18 @@ BOOST_AUTO_TEST_CASE(t1)
 
     BOOST_REQUIRE_EQUAL(std::string("file_sink"), sink->name());
 
+    // sigmf
+    sink = gr::sandia_utils::file_sink::make("complex",
+                                             sizeof(gr_complex),
+                                             "sigmf",
+                                             gr::sandia_utils::MANUAL,
+                                             0,
+                                             1000,
+                                             "/tmp",
+                                             "test");
+
+    BOOST_REQUIRE_EQUAL(std::string("file_sink"), sink->name());
+
 #ifdef HAVE_BLUEFILE_LIB
     // bluefile
     sink = gr::sandia_utils::file_sink::make(
